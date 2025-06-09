@@ -5,20 +5,24 @@
   <title>贪吃蛇游戏</title>
   <style>
     body { margin: 0; display: flex; flex-direction: column; align-items: center; background: #111; color: #fff; font-family: sans-serif; }
-    canvas { background: #000; margin-top: 20px; }
+    canvas { background: #333; margin-top: 20px; }
     .buttons { margin-top: 10px; display: flex; flex-wrap: wrap; justify-content: center; }
     .btn { padding: 10px 20px; margin: 5px; background: #333; color: #fff; border: none; font-size: 18px; border-radius: 8px; }
+    #currentTimeDisplay { margin-top: 10px; font-size: 16px; }
   </style>
 </head>
 <body>
   <h1>贪吃蛇游戏</h1>
+  <div id="currentTimeDisplay"></div>
   <canvas id="game" width="400" height="400"></canvas>
   <div class="buttons">
     <button class="btn" onclick="setDirection('up')">↑</button>
     <button class="btn" onclick="setDirection('left')">←</button>
     <button class="btn" onclick="setDirection('down')">↓</button>
     <button class="btn" onclick="setDirection('right')">→</button>
+    <button id="playPauseBtn" class="btn">Play/Pause Music</button>
   </div>
+  <audio id="bgMusic" src="background_music.mp3" loop></audio>
   <script>
     const canvas = document.getElementById("game");
     const ctx = canvas.getContext("2d");
@@ -108,6 +112,32 @@
 
     setInterval(update, 150);
     draw();
+
+    const bgMusic = document.getElementById("bgMusic");
+    const playPauseBtn = document.getElementById("playPauseBtn");
+
+    playPauseBtn.addEventListener("click", () => {
+      if (bgMusic.paused) {
+        bgMusic.play();
+        playPauseBtn.textContent = "Pause Music";
+      } else {
+        bgMusic.pause();
+        playPauseBtn.textContent = "Play Music";
+      }
+    });
+
+    const currentTimeDisplay = document.getElementById("currentTimeDisplay");
+
+    function updateTime() {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      currentTimeDisplay.innerHTML = `${hours}:${minutes}:${seconds}`;
+    }
+
+    updateTime();
+    setInterval(updateTime, 1000);
   </script>
 </body>
 </html>
