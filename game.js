@@ -2,8 +2,10 @@
 
 // Assumes food.js and snake.js are loaded first.
 // Assumes canvas, ctx, box, rows, snake (array from snake.js) are global.
-// Assumes currentFood (object from food.js) is global.
-// Assumes applyTransformation (function from snake.js) is global.
+// Assumes activeFoods (array from food.js) is global.
+// Assumes all necessary functions from snake.js (applyTransformation, resetSnake, moveSnake,
+// checkWallCollision, checkSelfCollision, incrementConsecutiveRedBlocks,
+// resetConsecutiveRedBlocks, getConsecutiveRedBlocks, incrementSnakeWidth) are global.
 
 // Game state variables
 let score = 0;
@@ -35,17 +37,16 @@ function initGame() {
     isPaused = false;
     gameOver = false;
     score = 0;
-    updateScoreDisplay(); // Reset score display
+    updateScoreDisplay();
 
-    // Reset speed boost effects
     if (speedBoostTimeoutId) {
         clearTimeout(speedBoostTimeoutId);
         speedBoostTimeoutId = null;
     }
-    gameSpeed = 200; // Default to easy or could be last selected difficulty
+    gameSpeed = 200;
 
-    resetSnake(); // From snake.js - this also resets snake color and transformation timeout
-    generateNewFood(); // From food.js - generates food and places it in currentFood
+    resetSnake(); // From snake.js - also resets width and consecutive red blocks
+    generateNewFood();
 
     if (gameIntervalId) {
         clearInterval(gameIntervalId);
@@ -72,8 +73,8 @@ function drawGame() {
     }
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawFood();  // From food.js
-    drawSnake(); // From snake.js
+    drawFood();
+    drawSnake();
     updateScoreDisplay();
 
     if (isPaused) {
@@ -106,16 +107,33 @@ function updateGame() {
         return;
     }
 
-    const head = moveSnake(); // From snake.js
+    const head = moveSnake();
 
-    if (checkWallCollision(head) || checkSelfCollision(head)) {
+    // Pass 'rows' for cols and rows as checkWallCollision expects it (from snake.js context)
+    if (checkWallCollision(head) || checkSelfCollision(head)) { // Assuming checkWallCollision now uses 'rows' for cols too
         triggerEndGame();
         return;
     }
 
-    if (checkFoodEaten(head)) { // From food.js
-        const eatenFoodType = currentFood.type;
+    let foodEatenThisTick = false;
+    const eatenFoodItem = checkFoodEaten(head);
+
+    if (eatenFoodItem) {
+        foodEatenThisTick = true;
+        const eatenFoodType = eatenFoodItem.type;
         score += eatenFoodType.score;
+
+        // Fattening logic
+        if (eatenFoodType.id === FOOD_TYPES.RED_BLOCK.id) { // Check against ID from FOOD_TYPES
+            incrementConsecutiveRedBlocks(); // from snake.js
+            if (getConsecutiveRedBlocks() >= 2) {
+                incrementSnakeWidth(); // from snake.js
+                // Reset counter after width increase to require two more for next increase
+                resetConsecutiveRedBlocks();
+            }
+        } else {
+            resetConsecutiveRedBlocks(); // from snake.js, reset if other food eaten
+        }
 
         if (eatenFoodType.effect === 'game_over') {
             triggerEndGame();
@@ -129,7 +147,6 @@ function updateGame() {
             } else {
                 originalGameSpeed = gameSpeed;
             }
-            // Ensure originalGameSpeed has a valid base if speed boost is picked up first
             if (originalGameSpeed === 0) originalGameSpeed = gameSpeed;
 
             gameSpeed = Math.max(50, Math.floor(originalGameSpeed * eatenFoodType.speedMultiplier));
@@ -143,19 +160,35 @@ function updateGame() {
                     clearInterval(gameIntervalId);
                     gameIntervalId = setInterval(updateGame, gameSpeed);
                 }
-                // If paused, gameSpeed is updated. Interval will use it when unpaused.
                 speedBoostTimeoutId = null;
                 originalGameSpeed = 0;
             }, eatenFoodType.duration);
         }
 
-        // Apply transformation if defined for the food type
         if (eatenFoodType.transform) {
-            applyTransformation(eatenFoodType.transform); // Function from snake.js
+            applyTransformation(eatenFoodType.transform);
+        }
+
+        if (eatenFoodType.effect === 'double_length') {
+            const segmentsToAdd = snake.length;
+            for (let i = 0; i < segmentsToAdd; i++) {
+                snake.push({ x: snake[snake.length - 1].x, y: snake[snake.length - 1].y });
+            }
+        } else if (eatenFoodType.effect === 'halve_length') {
+            const lenForHalvingCheck = snake.length;
+            if (lenForHalvingCheck > 2) {
+                const targetLength = Math.max(1, Math.floor(lenForHalvingCheck / 2));
+                while (snake.length > targetLength) {
+                    if (snake.length > 1) snake.pop();
+                    else break;
+                }
+            }
         }
 
         generateNewFood();
-    } else {
+    }
+
+    if (!foodEatenThisTick) {
         if (snake.length > 1) {
              snake.pop();
         }
@@ -166,7 +199,6 @@ function updateGame() {
 
 /**
  * Sets gameOver flag and clears speed boost.
- * Snake color reset is handled by resetSnake() during initGame().
  */
 function triggerEndGame() {
     gameOver = true;
@@ -174,11 +206,6 @@ function triggerEndGame() {
         clearTimeout(speedBoostTimeoutId);
         speedBoostTimeoutId = null;
     }
-    // Note: Snake color and transformation timeout are reset by resetSnake() in snake.js,
-    // which is called by initGame() when a new game starts.
-    // If the snake needs to be visually reset *immediately* on game over (before page reload),
-    // then currentSnakeColor = defaultSnakeColor and clearTimeout(transformationTimeoutId)
-    // would need to be callable/done here. For now, relying on full reset via initGame.
 }
 
 /**
@@ -216,7 +243,6 @@ function togglePauseGame() {
     if (isPaused) {
         drawGame();
     } else {
-        // When unpausing, ensure the game loop uses the current gameSpeed
         clearInterval(gameIntervalId);
         gameIntervalId = setInterval(updateGame, gameSpeed);
     }

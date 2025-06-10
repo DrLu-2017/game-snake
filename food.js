@@ -4,82 +4,102 @@
 // Global 'snake' array from snake.js is used by generateNewFood.
 
 const FOOD_TYPES = {
-    REGULAR:  { id: 'REGULAR',  color: '#f00', score: 1, effect: 'grow',        name: 'Regular Food' },
-    APPLE:    { id: 'APPLE',    color: '#ff0', score: 5, effect: 'score_bonus', name: 'Golden Apple', transform: { type: 'color_change', newColor: '#00f', duration: 3000 } }, // Blue snake for 3s
-    BANANA:   { id: 'BANANA',   color: '#f90', score: 2, effect: 'speed_boost', name: 'Speed Banana', duration: 5000, speedMultiplier: 0.66 }, // Orange
-    OBSTACLE: { id: 'OBSTACLE', color: '#777', score: 0, effect: 'game_over',   name: 'Obstacle' } // Grey
+    REGULAR:     { id: 'REGULAR',     color: '#f00', score: 1, effect: 'grow',          name: 'Regular Food' },
+    APPLE:       { id: 'APPLE',       color: '#ff0', score: 5, effect: 'score_bonus',   name: 'Golden Apple', transform: { type: 'color_change', newColor: '#00f', duration: 3000 } },
+    BANANA:      { id: 'BANANA',      color: '#f90', score: 2, effect: 'speed_boost',   name: 'Speed Banana', duration: 5000, speedMultiplier: 0.66 },
+    RED_BLOCK:   { id: 'RED_BLOCK',   color: '#c00', score: 2, effect: 'double_length', name: 'Grow Block' },
+    GREEN_BLOCK: { id: 'GREEN_BLOCK', color: '#0c0', score: 2, effect: 'halve_length',  name: 'Shrink Block' },
+    OBSTACLE:    { id: 'OBSTACLE',    color: '#777', score: 0, effect: 'game_over',     name: 'Obstacle' }
 };
 
-let currentFood = { x: 0, y: 0, type: FOOD_TYPES.REGULAR };
+let activeFoods = []; // Array to hold multiple food items
+const maxOnScreenFoods = 3; // Maximum number of food items on screen
 
 /**
- * Generates a new food item, selecting its type randomly and ensuring it doesn't spawn on the snake.
- * Updates the global currentFood object.
+ * Generates a new set of food items, populating the activeFoods array.
+ * Ensures food items do not overlap with the snake or each other.
  * Assumes 'snake' (array of segments {x, y}) and 'rows' (grid dimension) are globally available.
  */
 function generateNewFood() {
-    // Basic weighted random selection for food types
-    const rand = Math.random();
-    if (rand < 0.6) { // 60% chance for REGULAR
-        currentFood.type = FOOD_TYPES.REGULAR;
-    } else if (rand < 0.8) { // 20% chance for APPLE
-        currentFood.type = FOOD_TYPES.APPLE;
-    } else if (rand < 0.95) { // 15% chance for BANANA
-        currentFood.type = FOOD_TYPES.BANANA;
-    } else { // 5% chance for OBSTACLE
-        currentFood.type = FOOD_TYPES.OBSTACLE;
-    }
+    activeFoods = []; // Clear existing food items
+    const maxRetriesPerFood = 10; // Prevent infinite loops if board is full
 
-    let newX, newY;
-    let validPosition = false;
-    while (!validPosition) {
-        newX = Math.floor(Math.random() * rows);
-        newY = Math.floor(Math.random() * rows);
-        validPosition = true; // Assume valid until proven otherwise
-        // Check against snake body
-        // Ensure 'snake' is defined and is an array. If not, this will error.
-        // This assumes 'snake' from snake.js is globally accessible here.
-        if (typeof snake !== 'undefined' && Array.isArray(snake)) {
-            for (const segment of snake) {
-                if (segment.x === newX && segment.y === newY) {
+    for (let i = 0; i < maxOnScreenFoods; i++) {
+        let newX, newY, foodType;
+        let validPosition = false;
+        let retries = 0;
+
+        while (!validPosition && retries < maxRetriesPerFood) {
+            // Select food type
+            const rand = Math.random();
+            if (rand < 0.50) foodType = FOOD_TYPES.REGULAR;
+            else if (rand < 0.65) foodType = FOOD_TYPES.APPLE;
+            else if (rand < 0.80) foodType = FOOD_TYPES.BANANA;
+            else if (rand < 0.88) foodType = FOOD_TYPES.RED_BLOCK;
+            else if (rand < 0.96) foodType = FOOD_TYPES.GREEN_BLOCK;
+            else foodType = FOOD_TYPES.OBSTACLE;
+
+            newX = Math.floor(Math.random() * rows);
+            newY = Math.floor(Math.random() * rows);
+            validPosition = true;
+
+            // Check against snake body
+            if (typeof snake !== 'undefined' && Array.isArray(snake)) {
+                for (const segment of snake) {
+                    if (segment.x === newX && segment.y === newY) {
+                        validPosition = false;
+                        break;
+                    }
+                }
+            }
+            if (!validPosition) { retries++; continue; }
+
+            // Check against other food items already generated in this batch
+            for (const existingFood of activeFoods) {
+                if (existingFood.x === newX && existingFood.y === newY) {
                     validPosition = false;
                     break;
                 }
             }
+            if (!validPosition) { retries++; continue; }
+        }
+
+        if (validPosition) {
+            activeFoods.push({ x: newX, y: newY, type: foodType });
         } else {
-            // console.warn("generateNewFood: 'snake' array is not available globally or not an array.");
-            // Fallback: place food without checking snake collision if snake is not available.
-            // This might not be ideal but prevents an error.
+            // console.warn(`Could not find a valid position for food item ${i+1} after ${maxRetriesPerFood} retries.`);
         }
     }
-    currentFood.x = newX;
-    currentFood.y = newY;
 }
 
 /**
- * Draws the current food item on the canvas.
- * Uses the color defined in currentFood.type.
+ * Draws all active food items on the canvas.
  */
 function drawFood() {
-    if (ctx && box && currentFood && currentFood.type) {
-        ctx.fillStyle = currentFood.type.color;
-        ctx.fillRect(currentFood.x * box, currentFood.y * box, box - 2, box - 2);
+    if (ctx && box && activeFoods) {
+        activeFoods.forEach(foodItem => {
+            if (foodItem && foodItem.type) {
+                ctx.fillStyle = foodItem.type.color;
+                ctx.fillRect(foodItem.x * box, foodItem.y * box, box - 2, box - 2);
+            }
+        });
     }
 }
 
 /**
- * Checks if the snake's head is at the same position as the current food.
+ * Checks if the snake's head is at the same position as any of the active food items.
  * @param {object} headPosition - An object {x, y} representing the snake's head.
- * @returns {boolean} - True if food is eaten, false otherwise.
+ * @returns {object|null} - The eaten food item object (with x, y, type) or null if no food eaten.
  */
 function checkFoodEaten(headPosition) {
-    if (headPosition.x === currentFood.x && headPosition.y === currentFood.y) {
-        return true;
+    for (let i = 0; i < activeFoods.length; i++) {
+        const foodItem = activeFoods[i];
+        if (headPosition.x === foodItem.x && headPosition.y === foodItem.y) {
+            // Remove the eaten food from the active list by creating a new array without it.
+            // Or, mark it for removal and then filter. Simpler for now: just return it.
+            // The game.js logic will handle respawning all food.
+            return foodItem;
+        }
     }
-    return false;
+    return null; // No food eaten
 }
-
-// Note: The old `initFood` that was called by index.html is removed.
-// `generateNewFood` is now the primary function for creating food and will be called from game.js.
-// The initial call to place food will be from game.js's initGame function.
-// Make sure `snake` array from snake.js is globally accessible for `generateNewFood`.
