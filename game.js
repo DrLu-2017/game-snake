@@ -123,15 +123,18 @@ function updateGame() {
         const eatenFoodType = eatenFoodItem.type;
         score += eatenFoodType.score;
 
+
         // Fattening logic
         if (eatenFoodType.id === FOOD_TYPES.RED_BLOCK.id) { // Check against ID from FOOD_TYPES
             incrementConsecutiveRedBlocks(); // from snake.js
             if (getConsecutiveRedBlocks() >= 2) {
                 incrementSnakeWidth(); // from snake.js
-                // Reset counter after width increase to require two more for next increase
                 resetConsecutiveRedBlocks();
             }
         } else {
+            // Only reset if it's not a RED_BLOCK. If it was a RED_BLOCK but count < 2, we don't reset here.
+            // The reset for RED_BLOCK happens above if width is incremented.
+            // This else means "any food other than RED_BLOCK was eaten".
             resetConsecutiveRedBlocks(); // from snake.js, reset if other food eaten
         }
 
