@@ -9,11 +9,13 @@
     .buttons { margin-top: 10px; display: flex; flex-wrap: wrap; justify-content: center; }
     .btn { padding: 10px 20px; margin: 5px; background: #333; color: #fff; border: none; font-size: 18px; border-radius: 8px; }
     #currentTimeDisplay { margin-top: 10px; font-size: 16px; }
+    #scoreDisplay { margin-top: 5px; font-size: 20px; color: #fff; }
   </style>
 </head>
 <body>
   <h1>贪吃蛇游戏</h1>
   <div id="currentTimeDisplay"></div>
+  <div id="scoreDisplay">Score: 0</div>
   <canvas id="game" width="400" height="400"></canvas>
   <div class="buttons">
     <button class="btn" onclick="setDirection('up')">↑</button>
@@ -28,186 +30,74 @@
   </div>
   <!-- NOTE: "background_music.mp3" is a placeholder. Replace with a valid audio file path for music to play. -->
   <audio id="bgMusic" src="background_music.mp3" loop></audio>
+
+  <!-- Scripts will be loaded here -->
+  <script src="food.js"></script>
+  <script src="snake.js"></script>
+  <script src="game.js"></script>
+
   <script>
+    // Essential global variables for canvas and game setup
     const canvas = document.getElementById("game");
     const ctx = canvas.getContext("2d");
+    const box = 20; // Size of each game grid box
+    const rows = canvas.width / box; // Number of rows/columns in the grid
 
-    const box = 20;
-    const rows = canvas.width / box;
-    let snake = [{ x: 10, y: 10 }];
-    let food = randomPosition();
-    let dx = 1, dy = 0;
-    let score = 0;
-    let gameOver = false;
-    let gameSpeed = 200; // Default to Easy speed
-    let gameIntervalId;
-    let isPaused = false;
-    let gameStarted = false;
-
-    function randomPosition() {
-      return {
-        x: Math.floor(Math.random() * rows),
-        y: Math.floor(Math.random() * rows)
-      };
-    }
-
-    function draw() {
-      if (!gameStarted) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "#fff";
-        ctx.font = "30px Arial";
-        ctx.textAlign = "center";
-        ctx.fillText("Press Start Game", canvas.width / 2, canvas.height / 2);
-        return;
-      }
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // 绘制蛇
-      for (let s of snake) {
-        ctx.fillStyle = "#0f0";
-        ctx.fillRect(s.x * box, s.y * box, box - 2, box - 2);
-      }
-
-      // 绘制食物
-      ctx.fillStyle = "#f00";
-      ctx.fillRect(food.x * box, food.y * box, box - 2, box - 2);
-
-      if (isPaused) {
-        ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "#fff";
-        ctx.font = "30px Arial";
-        ctx.textAlign = "center";
-        ctx.fillText("Paused", canvas.width / 2, canvas.height / 2);
-      }
-    }
-
-    function update() {
-      if (gameOver) return;
-
-      if (isPaused) {
-        draw(); // Keep drawing the screen to show "Paused" message and current state
-        return;
-      }
-
-      const head = { x: snake[0].x + dx, y: snake[0].y + dy };
-
-      // 撞墙
-      if (head.x < 0 || head.x >= rows || head.y < 0 || head.y >= rows) {
-        endGame();
-        return;
-      }
-
-      // 撞自己
-      for (let s of snake) {
-        if (s.x === head.x && s.y === head.y) {
-          endGame();
-          return;
-        }
-      }
-
-      snake.unshift(head);
-
-      // 吃到食物
-      if (head.x === food.x && head.y === food.y) {
-        food = randomPosition();
-        score++;
-      } else {
-        snake.pop();
-      }
-
-      draw();
-    }
-
-    function endGame() {
-      gameOver = true;
-      alert("游戏结束！你的得分：" + score);
-      location.reload();
-    }
-
-    // 控制方向
-    document.addEventListener("keydown", e => {
-      if (e.key === " ") {
-        if (!gameStarted) {
-          return; // Do not allow pausing if the game hasn't started
-        }
-        isPaused = !isPaused;
-        e.preventDefault();
-        // If pausing, call draw immediately to show the message.
-        // If unpausing, the next interval tick will call update then draw.
-        if (isPaused) {
-            draw();
-        }
-        return; // Don't process other keys if space was pressed
-      }
-
-      if (!isPaused) { // Only allow direction changes if not paused
-        if (e.key === "ArrowUp" && dy === 0) { dx = 0; dy = -1; }
-        if (e.key === "ArrowDown" && dy === 0) { dx = 0; dy = 1; }
-        if (e.key === "ArrowLeft" && dx === 0) { dx = -1; dy = 0; }
-        if (e.key === "ArrowRight" && dx === 0) { dx = 1; dy = 0; }
-      }
-    });
-
-    // 手机触屏按钮
-    function setDirection(dir) { // Also ensure touch controls respect pause
-      if (isPaused) return;
-      if (dir === 'up' && dy === 0) { dx = 0; dy = -1; }
-      if (dir === 'down' && dy === 0) { dx = 0; dy = 1; }
-      if (dir === 'left' && dx === 0) { dx = -1; dy = 0; }
-      if (dir === 'right' && dx === 0) { dx = 1; dy = 0; }
-    }
-
-    function setDifficulty(level) {
-      switch (level) {
-        case 'easy':
-          gameSpeed = 200;
-          break;
-        case 'medium':
-          gameSpeed = 150;
-          break;
-        case 'hard':
-          gameSpeed = 100;
-          break;
-      }
-      clearInterval(gameIntervalId);
-      // Optional: Reset game state here (snake position, score, etc.)
-      // For now, just restarting the interval with new speed
-      // Only start/restart interval if game has already started
-      if (gameStarted) {
-        clearInterval(gameIntervalId); // Clear existing loop
-        gameIntervalId = setInterval(update, gameSpeed);
-      }
-    }
-
-    draw(); // Initial draw (will show "Press Start Game")
-
+    // UI Elements & Event Listeners specific to index.html
     const bgMusic = document.getElementById("bgMusic");
     const playPauseBtn = document.getElementById("playPauseBtn");
     const difficultyButtons = document.querySelectorAll(".difficulty-btn");
     const startGameBtn = document.getElementById("startGameBtn");
+    const currentTimeDisplay = document.getElementById("currentTimeDisplay");
+    // const scoreDisplay = document.getElementById("scoreDisplay"); // Already created by game.js logic or added HTML
 
-    startGameBtn.addEventListener("click", () => {
-      gameStarted = true;
-      isPaused = false;
-      gameOver = false;
-      snake = [{ x: 10, y: 10 }];
-      dx = 1; dy = 0;
-      score = 0;
-      food = randomPosition();
-      // gameSpeed is already 200 (Easy) or set by difficulty buttons if they were active
-
-      clearInterval(gameIntervalId); // Clear any residual interval
-      gameIntervalId = setInterval(update, gameSpeed);
-
-      startGameBtn.style.display = 'none'; // Hide start button
-      // Show difficulty buttons
-      difficultyButtons.forEach(btn => btn.style.display = 'inline-block');
-
-      draw(); // Draw initial game state
+    // Initialize food and draw initial game screen (start message)
+    // food.js and game.js functions are now globally available.
+    document.addEventListener('DOMContentLoaded', () => {
+        // initFood(); // Removed: initFood is no longer in food.js.
+                       // generateNewFood() is called by initGame() in game.js.
+        drawGame(); // Call from game.js to draw the initial "Press Start Game" screen.
     });
 
+
+    // Event Listener for Start Game Button
+    startGameBtn.addEventListener("click", () => {
+      initGame(); // This function is from game.js
+      startGameBtn.style.display = 'none';
+      difficultyButtons.forEach(btn => btn.style.display = 'inline-block');
+    });
+
+    // Event Listener for Keyboard Controls
+    document.addEventListener("keydown", e => {
+      if (e.key === " ") {
+        // Pause logic is now within togglePauseGame in game.js
+        togglePauseGame();
+        e.preventDefault();
+      } else if (gameStarted && !isPaused) {
+        // Direction change logic is now within changeDirection in snake.js
+        if (e.key === "ArrowUp") { changeDirection('up'); }
+        else if (e.key === "ArrowDown") { changeDirection('down'); }
+        else if (e.key === "ArrowLeft") { changeDirection('left'); }
+        else if (e.key === "ArrowRight") { changeDirection('right'); }
+      }
+    });
+
+    // Event Listener for Touchscreen Direction Buttons
+    // This function is called by onclick attributes in HTML
+    function setDirection(direction) {
+      if (gameStarted && !isPaused) {
+        changeDirection(direction); // from snake.js
+      }
+    }
+
+    // Event Listeners for Difficulty Buttons
+    difficultyButtons.forEach(button => {
+      button.addEventListener("click", () => {
+        setGameDifficulty(button.dataset.level); // from game.js
+      });
+    });
+
+    // Music Play/Pause Button
     playPauseBtn.addEventListener("click", () => {
       if (bgMusic.paused) {
         bgMusic.play();
@@ -218,14 +108,7 @@
       }
     });
 
-    difficultyButtons.forEach(button => {
-      button.addEventListener("click", () => {
-        setDifficulty(button.dataset.level);
-      });
-    });
-
-    const currentTimeDisplay = document.getElementById("currentTimeDisplay");
-
+    // Current Time Display
     function updateTime() {
       const now = new Date();
       const hours = String(now.getHours()).padStart(2, '0');
@@ -233,12 +116,81 @@
       const seconds = String(now.getSeconds()).padStart(2, '0');
       currentTimeDisplay.innerHTML = `${hours}:${minutes}:${seconds}`;
     }
+    updateTime(); // Initial call
+    setInterval(updateTime, 1000); // Update every second
 
-    updateTime();
-    setInterval(updateTime, 1000);
+    // Swipe Controls for Mobile
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchEndX = 0;
+    let touchEndY = 0;
+    const minSwipeDistance = 30; // Minimum distance for a swipe to be registered
+    let lastTapTime = 0;
+    const doubleTapDelay = 300; // Milliseconds
+    const tapThreshold = 10; // Max pixels to move for it to be considered a tap
 
-    // Start game loop - REMOVED, game starts on button click now
-    // gameIntervalId = setInterval(update, gameSpeed);
+    canvas.addEventListener('touchstart', function(e) {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        // Using preventDefault here might interfere with double tap,
+        // as it can prevent subsequent touchend in some cases if not handled carefully.
+        // Let's manage preventDefault in touchend conditionally.
+    }, false);
+
+    canvas.addEventListener('touchmove', function(e) {
+        // If significant movement, it's likely a swipe, could preventDefault here
+        // For simplicity, handling in touchend based on overall displacement.
+    }, false);
+
+    canvas.addEventListener('touchend', function(e) {
+        touchEndX = e.changedTouches[0].clientX;
+        touchEndY = e.changedTouches[0].clientY;
+
+        const diffX = touchEndX - touchStartX;
+        const diffY = touchEndY - touchStartY;
+        const currentTime = new Date().getTime();
+        const tapTimeDifference = currentTime - lastTapTime;
+
+        // Check if it's a tap (minimal movement)
+        if (Math.abs(diffX) < tapThreshold && Math.abs(diffY) < tapThreshold) {
+            e.preventDefault(); // Prevent default actions for taps (like zoom)
+            if (tapTimeDifference < doubleTapDelay && tapTimeDifference > 0) {
+                // Double tap
+                if (gameStarted && !gameOver) {
+                    togglePauseGame(); // Pause/resume active game
+                } else {
+                    // If game not started, or is over, double tap acts like "Start Game"
+                    // Need to ensure UI elements like start button are handled correctly by initGame
+                    const startGameButton = document.getElementById('startGameBtn');
+                    if(startGameButton) startGameButton.style.display = 'none'; // Hide if visible
+                    difficultyButtons.forEach(btn => btn.style.display = 'inline-block'); // Show
+                    initGame();
+                }
+                lastTapTime = 0; // Reset lastTapTime to prevent triple tap from acting as double
+            } else {
+                // Single tap
+                lastTapTime = currentTime;
+            }
+        } else { // Else, it's a swipe
+            if (!gameStarted || isPaused) return; // Only process swipes if game is active and not paused
+
+            if (Math.abs(diffX) > Math.abs(diffY)) { // Horizontal swipe
+                if (diffX > minSwipeDistance) {
+                    changeDirection('right');
+                } else if (diffX < -minSwipeDistance) {
+                    changeDirection('left');
+                }
+            } else if (Math.abs(diffY) > Math.abs(diffX)) { // Vertical swipe
+                if (diffY > minSwipeDistance) {
+                    changeDirection('down');
+                } else if (diffY < -minSwipeDistance) {
+                    changeDirection('up');
+                }
+            }
+            // Consider adding e.preventDefault() here for swipes if page scrolling is an issue.
+        }
+    }, false);
+
   </script>
 </body>
 </html>
