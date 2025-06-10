@@ -54,6 +54,7 @@ function initGame() {
     gameIntervalId = setInterval(updateGame, gameSpeed);
 
     drawGame();
+    if (typeof updateControlBtnText === 'function') updateControlBtnText();
 }
 
 /**
@@ -209,6 +210,7 @@ function triggerEndGame() {
         clearTimeout(speedBoostTimeoutId);
         speedBoostTimeoutId = null;
     }
+    if (typeof updateControlBtnText === 'function') updateControlBtnText();
 }
 
 /**
@@ -249,4 +251,5 @@ function togglePauseGame() {
         clearInterval(gameIntervalId);
         gameIntervalId = setInterval(updateGame, gameSpeed);
     }
+    if (typeof updateControlBtnText === 'function') updateControlBtnText();
 }

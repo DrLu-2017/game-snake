@@ -10,6 +10,13 @@
     .btn { padding: 10px 20px; margin: 5px; background: #333; color: #fff; border: none; font-size: 18px; border-radius: 8px; }
     #currentTimeDisplay { margin-top: 10px; font-size: 16px; }
     #scoreDisplay { margin-top: 5px; font-size: 20px; color: #fff; }
+    #rulesContainer { margin-top: 15px; padding: 10px; border: 1px solid #555; border-radius: 5px; max-width: 500px; text-align: left; background-color: #222; }
+    #rulesContainer h2 { margin-top: 0; color: #fff; text-align: center;}
+    #rulesContainer h3 { margin-top: 15px; margin-bottom: 5px; color: #eee; }
+    #rulesContainer ul { margin-left: 20px; padding-left: 10px; }
+    #rulesContainer li { margin-bottom: 8px; line-height: 1.4; }
+    #rulesContainer strong { color: #fff; }
+    #rulesContainer p { margin-bottom: 10px; line-height: 1.4;}
   </style>
 </head>
 <body>
@@ -18,16 +25,23 @@
   <div id="scoreDisplay">Score: 0</div>
   <canvas id="game" width="400" height="400"></canvas>
   <div class="buttons">
+    <button id="toggleRulesBtn" class="btn">Show Rules</button> <!-- Added Rules Button -->
     <button class="btn" onclick="setDirection('up')">↑</button>
     <button class="btn" onclick="setDirection('left')">←</button>
     <button class="btn" onclick="setDirection('down')">↓</button>
     <button class="btn" onclick="setDirection('right')">→</button>
-    <button id="startGameBtn" class="btn">Start Game</button>
+    <button id="controlBtn" class="btn">Start Game</button> <!-- ID changed, text updated by JS -->
     <button id="playPauseBtn" class="btn">Play/Pause Music</button><span style="font-size: 12px; color: #aaa; margin-left: 5px;">(Music: 'background_music.mp3' needed)</span>
     <button class="btn difficulty-btn" data-level="easy" style="display: none;">Easy</button>
     <button class="btn difficulty-btn" data-level="medium" style="display: none;">Medium</button>
     <button class="btn difficulty-btn" data-level="hard" style="display: none;">Hard</button>
   </div>
+
+  <!-- Rules Container -->
+  <div id="rulesContainer" style="display: none;">
+      <!-- Content will be populated by JavaScript -->
+  </div>
+
   <!-- NOTE: "background_music.mp3" is a placeholder. Replace with a valid audio file path for music to play. -->
   <audio id="bgMusic" src="background_music.mp3" loop></audio>
 
@@ -47,24 +61,96 @@
     const bgMusic = document.getElementById("bgMusic");
     const playPauseBtn = document.getElementById("playPauseBtn");
     const difficultyButtons = document.querySelectorAll(".difficulty-btn");
-    const startGameBtn = document.getElementById("startGameBtn");
+    const controlBtn = document.getElementById("controlBtn"); // Updated ID
     const currentTimeDisplay = document.getElementById("currentTimeDisplay");
-    // const scoreDisplay = document.getElementById("scoreDisplay"); // Already created by game.js logic or added HTML
+    const toggleRulesBtn = document.getElementById('toggleRulesBtn');
+    const rulesContainer = document.getElementById('rulesContainer');
+
+    function updateControlBtnText() {
+        // Assumes controlBtn, gameStarted, gameOver, isPaused are accessible
+        if (!gameStarted) {
+            controlBtn.textContent = 'Start Game';
+        } else if (gameOver) {
+            controlBtn.textContent = 'Restart Game';
+        } else if (isPaused) {
+            controlBtn.textContent = 'Resume Game';
+        } else {
+            controlBtn.textContent = 'Pause Game';
+        }
+    }
 
     // Initialize food and draw initial game screen (start message)
     // food.js and game.js functions are now globally available.
     document.addEventListener('DOMContentLoaded', () => {
-        // initFood(); // Removed: initFood is no longer in food.js.
-                       // generateNewFood() is called by initGame() in game.js.
         drawGame(); // Call from game.js to draw the initial "Press Start Game" screen.
+        updateControlBtnText(); // Set initial text for controlBtn
+
+        // Populate Rules
+        rulesContainer.innerHTML = `
+            <h2>Welcome to Snake!</h2>
+
+            <h3>Objective:</h3>
+            <p>Control the snake to eat food, grow longer, and achieve the highest score! Avoid colliding with the walls or the snake's own body.</p>
+
+            <h3>Controls:</h3>
+            <ul>
+                <li><strong>Desktop:</strong>
+                    <ul>
+                        <li>Arrow Keys (Up, Down, Left, Right): Control snake direction.</li>
+                        <li>Spacebar: Pause / Resume game.</li>
+                    </ul>
+                </li>
+                <li><strong>Mobile:</strong>
+                    <ul>
+                        <li>Swipe (Up, Down, Left, Right) on the game area: Control snake direction.</li>
+                        <li>Double-Tap on the game area: Pause / Resume game. If game is over or not started, it will Start/Restart.</li>
+                    </ul>
+                </li>
+            </ul>
+
+            <h3>Scoring:</h3>
+            <p>Eating food increases your score. Different foods give different points.</p>
+
+            <h3>Difficulty Levels:</h3>
+            <p>Choose from Easy, Medium, or Hard before starting or during gameplay. Higher difficulty means a faster snake!</p>
+
+            <h3>Food Types & Effects:</h3>
+            <ul>
+                <li><strong>Regular Food (Green by default, unless transformed):</strong> Effect: Snake grows longer by one segment. Score: +1 point.</li>
+                <li><strong>Apple (Yellow):</strong> Effect: Score bonus! Your snake will also temporarily change color. Score: +5 points.</li>
+                <li><strong>Banana (Orange):</strong> Effect: Temporary speed boost for the snake. Be careful! Score: +2 points.</li>
+                <li><strong>Obstacle (Gray):</strong> Effect: Game Over! Avoid these. Score: 0 points.</li>
+                <li><strong>Red Block (Dark Red):</strong> Effect 1 (Length): Doubles the snake's current length. Effect 2 (Width/Fattening): If you eat two (2) Red Blocks <em>consecutively</em>, your snake will get wider. Each subsequent pair of consecutive Red Blocks will make it even wider. Eating any other food type resets the consecutive counter. Score: +2 points.</li>
+                <li><strong>Green Block (Dark Green):</strong> Effect: Halves the snake's current length (only if snake has > 2 segments; otherwise acts as Regular Food). Score: +2 points.</li>
+            </ul>
+
+            <p>Have fun and aim for a high score!</p>
+        `; // Removed "External Button" section as it's not implemented yet.
+
+        // Rules Toggle Button Listener
+        toggleRulesBtn.addEventListener('click', () => {
+            if (rulesContainer.style.display === 'none' || rulesContainer.style.display === '') {
+                rulesContainer.style.display = 'block';
+                toggleRulesBtn.textContent = 'Hide Rules';
+            } else {
+                rulesContainer.style.display = 'none';
+                toggleRulesBtn.textContent = 'Show Rules';
+            }
+        });
     });
 
-
-    // Event Listener for Start Game Button
-    startGameBtn.addEventListener("click", () => {
-      initGame(); // This function is from game.js
-      startGameBtn.style.display = 'none';
-      difficultyButtons.forEach(btn => btn.style.display = 'inline-block');
+    // Event Listener for the new controlBtn (replaces old startGameBtn listener)
+    controlBtn.addEventListener('click', function() {
+        if (!gameStarted) {
+            initGame(); // from game.js
+            difficultyButtons.forEach(btn => btn.style.display = 'inline-block'); // Show difficulty buttons
+        } else if (gameOver) {
+            initGame(); // from game.js
+            difficultyButtons.forEach(btn => btn.style.display = 'inline-block'); // Show difficulty buttons
+        } else {
+            togglePauseGame(); // from game.js
+        }
+        // updateControlBtnText() is called by initGame/togglePauseGame in game.js
     });
 
     // Event Listener for Keyboard Controls
@@ -138,8 +224,17 @@
     }, false);
 
     canvas.addEventListener('touchmove', function(e) {
-        // If significant movement, it's likely a swipe, could preventDefault here
-        // For simplicity, handling in touchend based on overall displacement.
+        // If there's enough movement, prevent default to avoid scrolling during a swipe.
+        if (gameStarted && !isPaused) { // Only consider preventing scroll if game is active
+            const currentX = e.touches[0].clientX;
+            const currentY = e.touches[0].clientY;
+            const diffX = currentX - touchStartX;
+            const diffY = currentY - touchStartY;
+            // If swipe is predominantly horizontal or vertical and exceeds a small threshold
+            if (Math.abs(diffX) > tapThreshold || Math.abs(diffY) > tapThreshold) {
+                // e.preventDefault(); // This can be too aggressive, let's test without first.
+            }
+        }
     }, false);
 
     canvas.addEventListener('touchend', function(e) {
@@ -190,6 +285,22 @@
             // Consider adding e.preventDefault() here for swipes if page scrolling is an issue.
         }
     }, false);
+
+    // Canvas click/tap to start game
+    canvas.addEventListener('click', function() {
+        if (!gameStarted) { // gameStarted is global from game.js
+            initGame(); // from game.js
+            difficultyButtons.forEach(btn => btn.style.display = 'inline-block'); // Show difficulty buttons
+            // initGame will call updateControlBtnText via game.js
+        }
+    });
+
+    // Ensure difficulty buttons are hidden initially, shown by initGame
+    // This should be done once, perhaps after defining difficultyButtons or in DOMContentLoaded
+    // For safety, let's ensure they are hidden on script load if not already by HTML.
+    // However, the HTML already sets them to display:none. This line is redundant but harmless.
+    // difficultyButtons.forEach(btn => btn.style.display = 'none');
+
 
   </script>
 </body>
