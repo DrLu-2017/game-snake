@@ -20,10 +20,11 @@
     <button class="btn" onclick="setDirection('left')">←</button>
     <button class="btn" onclick="setDirection('down')">↓</button>
     <button class="btn" onclick="setDirection('right')">→</button>
+    <button id="startGameBtn" class="btn">Start Game</button>
     <button id="playPauseBtn" class="btn">Play/Pause Music</button><span style="font-size: 12px; color: #aaa; margin-left: 5px;">(Music: 'background_music.mp3' needed)</span>
-    <button class="btn difficulty-btn" data-level="easy">Easy</button>
-    <button class="btn difficulty-btn" data-level="medium">Medium</button>
-    <button class="btn difficulty-btn" data-level="hard">Hard</button>
+    <button class="btn difficulty-btn" data-level="easy" style="display: none;">Easy</button>
+    <button class="btn difficulty-btn" data-level="medium" style="display: none;">Medium</button>
+    <button class="btn difficulty-btn" data-level="hard" style="display: none;">Hard</button>
   </div>
   <!-- NOTE: "background_music.mp3" is a placeholder. Replace with a valid audio file path for music to play. -->
   <audio id="bgMusic" src="background_music.mp3" loop></audio>
@@ -38,9 +39,10 @@
     let dx = 1, dy = 0;
     let score = 0;
     let gameOver = false;
-    let gameSpeed = 150; // Medium speed
+    let gameSpeed = 200; // Default to Easy speed
     let gameIntervalId;
     let isPaused = false;
+    let gameStarted = false;
 
     function randomPosition() {
       return {
@@ -50,6 +52,15 @@
     }
 
     function draw() {
+      if (!gameStarted) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#fff";
+        ctx.font = "30px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("Press Start Game", canvas.width / 2, canvas.height / 2);
+        return;
+      }
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       // 绘制蛇
@@ -118,6 +129,9 @@
     // 控制方向
     document.addEventListener("keydown", e => {
       if (e.key === " ") {
+        if (!gameStarted) {
+          return; // Do not allow pausing if the game hasn't started
+        }
         isPaused = !isPaused;
         e.preventDefault();
         // If pausing, call draw immediately to show the message.
@@ -160,14 +174,39 @@
       clearInterval(gameIntervalId);
       // Optional: Reset game state here (snake position, score, etc.)
       // For now, just restarting the interval with new speed
-      gameIntervalId = setInterval(update, gameSpeed);
+      // Only start/restart interval if game has already started
+      if (gameStarted) {
+        clearInterval(gameIntervalId); // Clear existing loop
+        gameIntervalId = setInterval(update, gameSpeed);
+      }
     }
 
-    draw(); // Initial draw
+    draw(); // Initial draw (will show "Press Start Game")
 
     const bgMusic = document.getElementById("bgMusic");
     const playPauseBtn = document.getElementById("playPauseBtn");
     const difficultyButtons = document.querySelectorAll(".difficulty-btn");
+    const startGameBtn = document.getElementById("startGameBtn");
+
+    startGameBtn.addEventListener("click", () => {
+      gameStarted = true;
+      isPaused = false;
+      gameOver = false;
+      snake = [{ x: 10, y: 10 }];
+      dx = 1; dy = 0;
+      score = 0;
+      food = randomPosition();
+      // gameSpeed is already 200 (Easy) or set by difficulty buttons if they were active
+
+      clearInterval(gameIntervalId); // Clear any residual interval
+      gameIntervalId = setInterval(update, gameSpeed);
+
+      startGameBtn.style.display = 'none'; // Hide start button
+      // Show difficulty buttons
+      difficultyButtons.forEach(btn => btn.style.display = 'inline-block');
+
+      draw(); // Draw initial game state
+    });
 
     playPauseBtn.addEventListener("click", () => {
       if (bgMusic.paused) {
@@ -198,8 +237,8 @@
     updateTime();
     setInterval(updateTime, 1000);
 
-    // Start game loop
-    gameIntervalId = setInterval(update, gameSpeed);
+    // Start game loop - REMOVED, game starts on button click now
+    // gameIntervalId = setInterval(update, gameSpeed);
   </script>
 </body>
 </html>
