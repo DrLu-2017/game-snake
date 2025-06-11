@@ -22,12 +22,35 @@
 <body>
   <h1>贪吃蛇游戏</h1>
   <div id="currentTimeDisplay"></div>
-  <div id="scoreDisplay">Current Length: 0</div> <!-- Label changed -->
-  <div id="gameStatusContainer" style="margin-top: 10px; padding: 5px; border: 1px solid #444; color: #ccc; font-size: 14px;">
+
+  <!-- Player 1 Status -->
+  <div id="p1StatusContainer" style="margin-top: 10px; padding: 5px; border: 1px solid #444; color: #ccc; font-size: 14px; width: 200px; text-align: center; margin-right: 5px;">
+      <h4>Player 1 (Green)</h4>
+      <div id="p1CurrentLengthDisplay">Current Length: 0</div>
+      <div id="p1TargetLengthDisplay" style="margin-bottom: 3px;">Target Length: 0</div>
+      <div id="p1RoundsDisplay" style="margin-bottom: 3px;">Rounds Cleared: 0 / 5</div>
+      <div id="p1FoodThisRoundDisplay">Food This Round: 0 / 10</div>
+      <div id="p1GameOverDisplay" style="color: red; display: none; font-weight: bold;">GAME OVER</div>
+  </div>
+
+  <!-- Player 2 Status -->
+  <div id="p2StatusContainer" style="margin-top: 10px; padding: 5px; border: 1px solid #444; color: #ccc; font-size: 14px; width: 200px; text-align: center; margin-left: 5px;">
+      <h4>Player 2 (Blue)</h4>
+      <div id="p2CurrentLengthDisplay">Current Length: 0</div>
+      <div id="p2TargetLengthDisplay" style="margin-bottom: 3px;">Target Length: 0</div>
+      <div id="p2RoundsDisplay" style="margin-bottom: 3px;">Rounds Cleared: 0 / 5</div>
+      <div id="p2FoodThisRoundDisplay">Food This Round: 0 / 10</div>
+      <div id="p2GameOverDisplay" style="color: red; display: none; font-weight: bold;">GAME OVER</div>
+  </div>
+
+  <!-- ScoreDisplay is removed as it's incorporated into P1 status. gameStatusContainer is replaced by P1 & P2 containers. -->
+  <!-- <div id="scoreDisplay">Current Length: 0</div> -->
+  <!-- <div id="gameStatusContainer" style="margin-top: 10px; padding: 5px; border: 1px solid #444; color: #ccc; font-size: 14px;">
       <div id="targetLengthDisplay" style="margin-bottom: 3px;">Target Length: 0</div>
       <div id="roundsDisplay" style="margin-bottom: 3px;">Rounds Cleared: 0 / 5</div>
       <div id="foodThisRoundDisplay">Food This Round: 0 / 10</div>
-  </div>
+  </div> -->
+
   <canvas id="game" width="400" height="400"></canvas>
   <div class="buttons">
     <button id="toggleRulesBtn" class="btn">Show Rules</button> <!-- Added Rules Button -->
@@ -59,23 +82,24 @@
     // Essential global variables for canvas and game setup
     const canvas = document.getElementById("game");
     const ctx = canvas.getContext("2d");
-    const box = 20; // Size of each game grid box
-    const rows = canvas.width / box; // Number of rows/columns in the grid
+    const box = 10; // New cell size
+    const rows = canvas.height / box; // Number of rows (Y dimension)
+    const cols = canvas.width / box;  // Number of columns (X dimension)
 
     // UI Elements & Event Listeners specific to index.html
     const bgMusic = document.getElementById("bgMusic");
     const playPauseBtn = document.getElementById("playPauseBtn");
     const difficultyButtons = document.querySelectorAll(".difficulty-btn");
     const controlBtn = document.getElementById("controlBtn"); // Updated ID
-    const currentTimeDisplay = document.getElementById("currentTimeDisplay");
+    // const scoreDisplay = document.getElementById("scoreDisplay"); // Replaced by p1CurrentLengthDisplay etc.
     const toggleRulesBtn = document.getElementById('toggleRulesBtn');
     const rulesContainer = document.getElementById('rulesContainer');
 
     function updateControlBtnText() {
-        // Assumes controlBtn, gameStarted, gameOver, isPaused are accessible
+        // Assumes controlBtn, gameStarted, gameOver, isPaused are accessible (gameOver is master)
         if (!gameStarted) {
             controlBtn.textContent = 'Start Game';
-        } else if (gameOver) {
+        } else if (gameOver) { // Master game over
             controlBtn.textContent = 'Restart Game';
         } else if (isPaused) {
             controlBtn.textContent = 'Resume Game';
@@ -89,58 +113,79 @@
     document.addEventListener('DOMContentLoaded', () => {
         drawGame(); // Call from game.js to draw the initial "Press Start Game" screen.
         updateControlBtnText(); // Set initial text for controlBtn
+        updateGameStatusDisplay(); // Initialize P1/P2 status displays
 
         // Populate Rules
         rulesContainer.innerHTML = `
             <h2>Welcome to Snake!</h2>
 
-            <h3>Game Mode: Target Length</h3>
-            <p>The primary goal in this mode is to complete <strong>${maxRoundsPerGame} rounds</strong> by growing your snake to a target length in each round. You have a limited number of food items per round (<strong>${maxFoodPerRound}</strong>) to reach the target length. Traditional score is replaced by your snake's current length.</p>
-
-            <h3>Objective (Target Length Mode):</h3>
-            <p>In each round, grow your snake to the displayed "Target Length" by eating food. You must do this before consuming all "Food This Round". Complete all rounds to win!</p>
-
-            <h3>Standard Objective (If not playing Target Length Mode / For reference):</h3>
-            <p>Control the snake to eat food, grow longer, and achieve the highest score! Avoid colliding with the walls or the snake's own body.</p>
+            <h3>Game Mode: Two-Player Target Length</h3>
+            <p>Compete with a friend or play cooperatively! Each player controls their own snake and tries to complete <strong>${maxRoundsPerGame} rounds</strong>. In each round, players must grow their snake to a randomly assigned target length by eating food. Each player has a limit of <strong>${maxFoodPerRound}</strong> food items per round to reach their target. Your snake's current length is your primary score for the round.</p>
 
             <h3>Controls:</h3>
             <ul>
-                <li><strong>Desktop:</strong>
+                <li><strong>Player 1 (Green Snake):</strong>
                     <ul>
                         <li>Arrow Keys (Up, Down, Left, Right): Control snake direction.</li>
-                        <li>Spacebar: Pause / Resume game.</li>
                     </ul>
                 </li>
-                <li><strong>Mobile:</strong>
+                <li><strong>Player 2 (Blue Snake):</strong>
                     <ul>
-                        <li>Swipe (Up, Down, Left, Right) on the game area: Control snake direction.</li>
-                        <li>Double-Tap on the game area: Pause / Resume game. If game is over or not started, it will Start/Restart.</li>
+                        <li>W, A, S, D Keys: Control snake direction (W=Up, A=Left, S=Down, D=Right).</li>
+                    </ul>
+                </li>
+                <li><strong>Shared Controls (All Players):</strong>
+                    <ul>
+                        <li>Spacebar: Pause / Resume game for all players.</li>
+                        <li>Double-Tap (Mobile): Pause / Resume game for all players. If game is over or not started, it will Start/Restart.</li>
+                        <li>Main Control Button (below game): Context-sensitive Pause/Resume/Restart.</li>
                     </ul>
                 </li>
             </ul>
 
-            <h3>Scoring & Rounds (Target Length Mode):</h3>
+            <h3>Two-Player Mode Details:</h3>
             <ul>
-                <li><strong>Current Length:</strong> Your snake's current length is displayed. This is your "score" for the round.</li>
-                <li><strong>Target Length:</strong> The length your snake needs to reach to complete the current round.</li>
-                <li><strong>Food This Round:</strong> Shows how many food items you've eaten out of the maximum allowed for the current round. If this limit is reached before achieving the Target Length, the game is over.</li>
-                <li><strong>Rounds Cleared:</strong> Tracks how many rounds you've successfully completed out of the total.</li>
+                <li><strong>Objective:</strong> Each player independently aims to complete ${maxRoundsPerGame} rounds by reaching their target length within the ${maxFoodPerRound} food item limit per round.</li>
+                <li><strong>Food:</strong> Food items are shared. The first snake to reach a food item consumes it, and its effects apply only to that snake. All food on screen refreshes after any food is eaten.</li>
+                <li><strong>Collisions:</strong>
+                    <ul>
+                        <li>Hitting a wall or your <em>own</em> snake's body will result in a game over for that player.</li>
+                        <li><strong>Snake vs. Snake:</strong>
+                            <ul>
+                                <li>If Player 1's head hits Player 2's body, Player 1 is out.</li>
+                                <li>If Player 2's head hits Player 1's body, Player 2 is out.</li>
+                                <li>If Player 1's head hits Player 2's head (head-on collision), both players are out.</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+                <li><strong>Game End:</strong>
+                    <ul>
+                        <li>A player is 'out' if they hit something, fail to meet their target length before running out of food for the round, or are eliminated by the other player.</li>
+                        <li>The game session ends when both players are out. The game will then declare a winner based on rounds completed or other criteria if applicable.</li>
+                        <li>If one player completes all their rounds and the other is still playing, the game continues for the active player until they also complete their rounds or are out.</li>
+                    </ul>
+                </li>
+                <li><strong>Winning:</strong> Try to complete all your rounds! If both players are active, the one who completes their rounds first or lasts longer with more rounds/length is generally considered the winner.</li>
             </ul>
+
+            <h3>Player Status Displays:</h3>
+            <p>Each player has their own status display showing their "Current Length", "Target Length" for the round, "Food This Round" (eaten/max), and "Rounds Cleared". A "GAME OVER" message will appear if a player is out.</p>
 
             <h3>Difficulty Levels:</h3>
             <p>Choose from Easy, Medium, or Hard before starting or during gameplay. Higher difficulty means a faster snake!</p>
 
             <h3>Food Types & Effects:</h3>
             <ul>
-                <li><strong>Regular Food:</strong> Effect: Snake grows by one segment. (Base score: +1, but primary goal is length).</li>
-                <li><strong>Apple (Yellow):</strong> Effect: Score bonus (less relevant in Target Length mode, but still gives +5 to traditional score if tracked). Snake temporarily changes color.</li>
-                <li><strong>Banana (Orange):</strong> Effect: Temporary speed boost. (Base score: +2).</li>
-                <li><strong>Obstacle (Gray):</strong> Effect: Game Over!</li>
-                <li><strong>Red Block (Dark Red):</strong> Effect (Length): Doubles snake's current length. Effect (Width/Fattening): Eat 2 consecutively for width increase (up to a maximum width). Eating any other food type resets the consecutive counter. (Base score: +2).</li>
-                <li><strong>Green Block (Dark Green):</strong> Effect: Halves snake's length (if > 2 segments). (Base score: +2).</li>
+                <li><strong>Regular Food:</strong> Snake grows by one segment.</li>
+                <li><strong>Apple (Yellow):</strong> Snake temporarily changes color. (Traditional score: +5).</li>
+                <li><strong>Banana (Orange):</strong> Temporary speed boost. (Traditional score: +2).</li>
+                <li><strong>Obstacle (Gray):</strong> Game Over for the player who eats it!</li>
+                <li><strong>Red Block (Dark Red):</strong> Doubles current length. Eat 2 consecutively for width increase (max width still applies). (Traditional score: +2).</li>
+                <li><strong>Green Block (Dark Green):</strong> Halves current length (if > 2 segments). (Traditional score: +2).</li>
             </ul>
 
-            <p>Have fun reaching the targets!</p>
+            <p>Have fun playing together!</p>
         `; // Removed "External Button" section as it's not implemented yet.
 
         // Rules Toggle Button Listener
@@ -179,23 +224,28 @@
     // Event Listener for Keyboard Controls
     document.addEventListener("keydown", e => {
       if (e.key === " ") {
-        // Pause logic is now within togglePauseGame in game.js
         togglePauseGame();
         e.preventDefault();
       } else if (gameStarted && !isPaused) {
-        // Direction change logic is now within changeDirection in snake.js
-        if (e.key === "ArrowUp") { changeDirection('up'); }
-        else if (e.key === "ArrowDown") { changeDirection('down'); }
-        else if (e.key === "ArrowLeft") { changeDirection('left'); }
-        else if (e.key === "ArrowRight") { changeDirection('right'); }
+        // Player 1 Controls (Arrow Keys)
+        if (e.key === "ArrowUp") { changeDirectionP1('up'); }
+        else if (e.key === "ArrowDown") { changeDirectionP1('down'); }
+        else if (e.key === "ArrowLeft") { changeDirectionP1('left'); }
+        else if (e.key === "ArrowRight") { changeDirectionP1('right'); }
+
+        // Player 2 Controls (WASD)
+        else if (e.key.toLowerCase() === 'w' && !p2_gameOver) { changeDirectionP2('up'); }
+        else if (e.key.toLowerCase() === 's' && !p2_gameOver) { changeDirectionP2('down'); }
+        else if (e.key.toLowerCase() === 'a' && !p2_gameOver) { changeDirectionP2('left'); }
+        else if (e.key.toLowerCase() === 'd' && !p2_gameOver) { changeDirectionP2('right'); }
       }
     });
 
-    // Event Listener for Touchscreen Direction Buttons
+    // Event Listener for Touchscreen Direction Buttons (Player 1 only for now)
     // This function is called by onclick attributes in HTML
-    function setDirection(direction) {
-      if (gameStarted && !isPaused) {
-        changeDirection(direction); // from snake.js
+    function setDirection(direction) { // This controls P1 by default
+      if (gameStarted && !isPaused && !p1_gameOver) {
+        changeDirectionP1(direction);
       }
     }
 

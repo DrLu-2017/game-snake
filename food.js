@@ -13,7 +13,7 @@ const FOOD_TYPES = {
 };
 
 let activeFoods = []; // Array to hold multiple food items
-const maxOnScreenFoods = 3; // Maximum number of food items on screen
+const maxOnScreenFoods = 5; // New value: Maximum number of food items on screen
 
 /**
  * Generates a new set of food items, populating the activeFoods array.
@@ -39,7 +39,8 @@ function generateNewFood() {
             else if (rand < 0.96) foodType = FOOD_TYPES.GREEN_BLOCK;
             else foodType = FOOD_TYPES.OBSTACLE;
 
-            newX = Math.floor(Math.random() * rows);
+            // Use 'cols' for X-axis limit and 'rows' for Y-axis limit
+            newX = Math.floor(Math.random() * cols);
             newY = Math.floor(Math.random() * rows);
             validPosition = true;
 
