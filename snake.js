@@ -35,12 +35,14 @@ function resetSnake() {
   // Reset fattening state
   snakeWidth = 1;
   consecutiveRedBlocksEaten = 0;
+  console.log("[DEBUG][snake.js] resetSnake: snakeWidth = " + snakeWidth + ", consecutiveRedBlocksEaten = " + consecutiveRedBlocksEaten);
 }
 
 /**
  * Draws the snake on the canvas using currentSnakeColor and snakeWidth.
  */
 function drawSnake() {
+  console.log("[DEBUG][snake.js] drawSnake: USING snakeWidth = " + snakeWidth);
   if (ctx && box && snake) {
     snake.forEach(segment => {
       ctx.fillStyle = currentSnakeColor;
@@ -150,11 +152,15 @@ function applyTransformation(transformDetails) {
 // --- Functions for managing fattening ---
 
 function incrementConsecutiveRedBlocks() {
+    console.log("[DEBUG][snake.js] incrementConsecutiveRedBlocks: old count = " + consecutiveRedBlocksEaten);
     consecutiveRedBlocksEaten++;
+    console.log("[DEBUG][snake.js] incrementConsecutiveRedBlocks: new count = " + consecutiveRedBlocksEaten);
 }
 
 function resetConsecutiveRedBlocks() {
+    console.log("[DEBUG][snake.js] resetConsecutiveRedBlocks: old count = " + consecutiveRedBlocksEaten);
     consecutiveRedBlocksEaten = 0;
+    console.log("[DEBUG][snake.js] resetConsecutiveRedBlocks: new count = " + consecutiveRedBlocksEaten);
 }
 
 function getConsecutiveRedBlocks() {
@@ -162,6 +168,7 @@ function getConsecutiveRedBlocks() {
 }
 
 function incrementSnakeWidth() {
+    console.log("[DEBUG][snake.js] incrementSnakeWidth: CALLED. current snakeWidth = " + snakeWidth + ", maxSnakeWidth = " + maxSnakeWidth);
     if (snakeWidth < maxSnakeWidth) {
         if (snakeWidth === 1) { // First increment from normal size
             snakeWidth = 2;
@@ -171,6 +178,7 @@ function incrementSnakeWidth() {
         // Reset consecutive counter as the width has been incremented
         // Or, game.js could reset it after calling incrementSnakeWidth if condition met.
         // Let's have game.js reset it for clarity of when the "2 consecutive" rule applies.
+        console.log("[DEBUG][snake.js] incrementSnakeWidth: new snakeWidth = " + snakeWidth);
     }
 }
 
