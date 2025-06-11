@@ -29,6 +29,9 @@ const maxSnakeWidth = 4; // Shared max width, can be player-specific if needed
  * Resets Player 1's snake to its initial state.
  */
 function resetSnake1() {
+  console.log("[DEBUG_STARTUP] resetSnake1: Start. cols = " + (typeof cols !== 'undefined' ? cols : "undef") + ", rows = " + (typeof rows !== 'undefined' ? rows : "undef"));
+  console.log("[DEBUG_STARTUP] resetSnake1: Initial snake1Body (first 2 segments): ", snake1Body ? JSON.stringify(snake1Body.slice(0,2)) : "undefined");
+
   snake1Body = [{ x: 10, y: 10 }]; // P1 starting position
   dx1 = 1; dy1 = 0; // P1 initial direction (right)
 
@@ -39,15 +42,19 @@ function resetSnake1() {
   currentSnake1Color = defaultSnake1Color;
   snake1Width = 1;
   consecutiveRedBlocksEaten1 = 0;
-  console.log("[DEBUG][snake.js] resetSnake1: snake1Width reset to " + snake1Width + ", consecutiveRedBlocksEaten1 reset to " + consecutiveRedBlocksEaten1);
+  // The existing log is fine, or can be merged/removed if too verbose with new ones.
+  // console.log("[DEBUG][snake.js] resetSnake1: snake1Width reset to " + snake1Width + ", consecutiveRedBlocksEaten1 reset to " + consecutiveRedBlocksEaten1);
+  console.log("[DEBUG_STARTUP] resetSnake1: End. Final snake1Body (first 2 segments): ", JSON.stringify(snake1Body.slice(0,2)));
 }
 
 /**
  * Resets Player 2's snake to its initial state.
  */
 function resetSnake2() {
-  // Ensure cols is defined before using it for P2's starting position
-  const startX = (typeof cols !== 'undefined' && cols > 15) ? cols - 10 : 15; // Default if cols is small/undefined
+  console.log("[DEBUG_STARTUP] resetSnake2: Start. cols = " + (typeof cols !== 'undefined' ? cols : "undef") + ", rows = " + (typeof rows !== 'undefined' ? rows : "undef"));
+  console.log("[DEBUG_STARTUP] resetSnake2: Initial snake2Body (first 2 segments): ", snake2Body ? JSON.stringify(snake2Body.slice(0,2)) : "undefined");
+
+  const startX = (typeof cols !== 'undefined' && cols > 15) ? cols - 10 : 15;
   const startY = (typeof rows !== 'undefined' && rows > 15) ? rows - 10 : 15;
   snake2Body = [{ x: startX, y: startY }];
   dx2 = -1; dy2 = 0; // P2 initial direction (left)
@@ -59,14 +66,20 @@ function resetSnake2() {
   currentSnake2Color = defaultSnake2Color;
   snake2Width = 1;
   consecutiveRedBlocksEaten2 = 0;
-  console.log("[DEBUG][snake.js] resetSnake2: snake2Width reset to " + snake2Width + ", consecutiveRedBlocksEaten2 reset to " + consecutiveRedBlocksEaten2);
+  // console.log("[DEBUG][snake.js] resetSnake2: snake2Width reset to " + snake2Width + ", consecutiveRedBlocksEaten2 reset to " + consecutiveRedBlocksEaten2);
+  console.log("[DEBUG_STARTUP] resetSnake2: End. Final snake2Body (first 2 segments): ", JSON.stringify(snake2Body.slice(0,2)));
 }
 
 /**
  * Helper function to draw a single snake.
  */
 function drawSingleSnake(snakeBody, color, width) {
-    if (ctx && box && snakeBody) {
+    console.log("[DEBUG_STARTUP] drawSingleSnake: Drawing snake with length " + (typeof snakeBody !== 'undefined' && snakeBody ? snakeBody.length : 'undefined_or_empty') + ", color: " + color + ", width: " + width);
+    if (!snakeBody || snakeBody.length === 0) {
+        console.log("[DEBUG_STARTUP] drawSingleSnake: snakeBody is undefined, null, or empty. Skipping draw for this snake.");
+        return;
+    }
+    if (ctx && box) { // Removed snakeBody from here as it's checked above
         snakeBody.forEach(segment => {
             ctx.fillStyle = color;
             const segmentSize = box * width;
@@ -81,11 +94,11 @@ function drawSingleSnake(snakeBody, color, width) {
  * Draws both snakes on the canvas.
  */
 function drawSnakes() {
-  console.log("[DEBUG][snake.js] drawSnakes: P1 width = " + snake1Width + ", P2 width = " + snake2Width);
+  // console.log("[DEBUG][snake.js] drawSnakes: P1 width = " + snake1Width + ", P2 width = " + snake2Width); // This is the old log
+  console.log("[DEBUG_STARTUP] drawSnakes: Start. snake1Body length: " + (typeof snake1Body !== 'undefined' && snake1Body ? snake1Body.length : 'undefined_or_empty') + ", snake2Body length: " + (typeof snake2Body !== 'undefined' && snake2Body ? snake2Body.length : 'undefined_or_empty'));
   drawSingleSnake(snake1Body, currentSnake1Color, snake1Width);
-  if (snake2Body && snake2Body.length > 0) { // Only draw P2 if it has segments
-      drawSingleSnake(snake2Body, currentSnake2Color, snake2Width);
-  }
+  // No need to check snake2Body.length here, drawSingleSnake does it.
+  drawSingleSnake(snake2Body, currentSnake2Color, snake2Width);
 }
 
 

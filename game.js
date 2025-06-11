@@ -40,31 +40,79 @@ let score = 0; // Keep traditional score for non-target modes or if needed.
  * Updates the game status displays in the HTML for both players.
  */
 function updateGameStatusDisplay() {
+    console.log("[DEBUG_STARTUP] updateGameStatusDisplay: Start");
     // Player 1
     const p1TargetLengthEl = document.getElementById('p1TargetLengthDisplay');
-    const p1RoundsEl = document.getElementById('p1RoundsDisplay');
-    const p1FoodThisRoundEl = document.getElementById('p1FoodThisRoundDisplay');
-    const p1CurrentLengthEl = document.getElementById('p1CurrentLengthDisplay');
-    const p1GameOverEl = document.getElementById('p1GameOverDisplay');
+    if (!p1TargetLengthEl) {
+        console.error("[DEBUG_STARTUP] updateGameStatusDisplay: Element 'p1TargetLengthDisplay' NOT FOUND!");
+    } else {
+        p1TargetLengthEl.textContent = 'Target Length: ' + p1_targetLength;
+    }
 
-    if (p1TargetLengthEl) p1TargetLengthEl.textContent = 'Target Length: ' + p1_targetLength;
-    if (p1RoundsEl) p1RoundsEl.textContent = 'Rounds Cleared: ' + p1_roundsAchieved + ' / ' + maxRoundsPerGame;
-    if (p1FoodThisRoundEl) p1FoodThisRoundEl.textContent = 'Food This Round: ' + p1_foodEatenThisRound + ' / ' + maxFoodPerRound;
-    if (p1CurrentLengthEl) p1CurrentLengthEl.textContent = 'Current Length: ' + (snake1Body ? snake1Body.length : 0);
-    if (p1GameOverEl) p1GameOverEl.style.display = p1_gameOver ? 'block' : 'none';
+    const p1RoundsEl = document.getElementById('p1RoundsDisplay');
+    if (!p1RoundsEl) {
+        console.error("[DEBUG_STARTUP] updateGameStatusDisplay: Element 'p1RoundsDisplay' NOT FOUND!");
+    } else {
+        p1RoundsEl.textContent = 'Rounds Cleared: ' + p1_roundsAchieved + ' / ' + maxRoundsPerGame;
+    }
+
+    const p1FoodThisRoundEl = document.getElementById('p1FoodThisRoundDisplay');
+    if (!p1FoodThisRoundEl) {
+        console.error("[DEBUG_STARTUP] updateGameStatusDisplay: Element 'p1FoodThisRoundDisplay' NOT FOUND!");
+    } else {
+        p1FoodThisRoundEl.textContent = 'Food This Round: ' + p1_foodEatenThisRound + ' / ' + maxFoodPerRound;
+    }
+
+    const p1CurrentLengthEl = document.getElementById('p1CurrentLengthDisplay');
+    if (!p1CurrentLengthEl) {
+        console.error("[DEBUG_STARTUP] updateGameStatusDisplay: Element 'p1CurrentLengthDisplay' NOT FOUND!");
+    } else {
+        p1CurrentLengthEl.textContent = 'Current Length: ' + (typeof snake1Body !== 'undefined' && snake1Body ? snake1Body.length : 0);
+    }
+
+    const p1GameOverEl = document.getElementById('p1GameOverDisplay');
+    if (!p1GameOverEl) {
+        console.error("[DEBUG_STARTUP] updateGameStatusDisplay: Element 'p1GameOverDisplay' NOT FOUND!");
+    } else {
+        p1GameOverEl.style.display = p1_gameOver ? 'block' : 'none';
+    }
 
     // Player 2
     const p2TargetLengthEl = document.getElementById('p2TargetLengthDisplay');
-    const p2RoundsEl = document.getElementById('p2RoundsDisplay');
-    const p2FoodThisRoundEl = document.getElementById('p2FoodThisRoundDisplay');
-    const p2CurrentLengthEl = document.getElementById('p2CurrentLengthDisplay');
-    const p2GameOverEl = document.getElementById('p2GameOverDisplay');
+    if (!p2TargetLengthEl) {
+        console.error("[DEBUG_STARTUP] updateGameStatusDisplay: Element 'p2TargetLengthDisplay' NOT FOUND!");
+    } else {
+        p2TargetLengthEl.textContent = 'Target Length: ' + p2_targetLength;
+    }
 
-    if (p2TargetLengthEl) p2TargetLengthEl.textContent = 'Target Length: ' + p2_targetLength;
-    if (p2RoundsEl) p2RoundsEl.textContent = 'Rounds Cleared: ' + p2_roundsAchieved + ' / ' + maxRoundsPerGame;
-    if (p2FoodThisRoundEl) p2FoodThisRoundEl.textContent = 'Food This Round: ' + p2_foodEatenThisRound + ' / ' + maxFoodPerRound;
-    if (p2CurrentLengthEl) p2CurrentLengthEl.textContent = 'Current Length: ' + (snake2Body ? snake2Body.length : 0);
-    if (p2GameOverEl) p2GameOverEl.style.display = p2_gameOver ? 'block' : 'none';
+    const p2RoundsEl = document.getElementById('p2RoundsDisplay');
+    if (!p2RoundsEl) {
+        console.error("[DEBUG_STARTUP] updateGameStatusDisplay: Element 'p2RoundsDisplay' NOT FOUND!");
+    } else {
+        p2RoundsEl.textContent = 'Rounds Cleared: ' + p2_roundsAchieved + ' / ' + maxRoundsPerGame;
+    }
+
+    const p2FoodThisRoundEl = document.getElementById('p2FoodThisRoundDisplay');
+    if (!p2FoodThisRoundEl) {
+        console.error("[DEBUG_STARTUP] updateGameStatusDisplay: Element 'p2FoodThisRoundDisplay' NOT FOUND!");
+    } else {
+        p2FoodThisRoundEl.textContent = 'Food This Round: ' + p2_foodEatenThisRound + ' / ' + maxFoodPerRound;
+    }
+
+    const p2CurrentLengthEl = document.getElementById('p2CurrentLengthDisplay');
+    if (!p2CurrentLengthEl) {
+        console.error("[DEBUG_STARTUP] updateGameStatusDisplay: Element 'p2CurrentLengthDisplay' NOT FOUND!");
+    } else {
+        p2CurrentLengthEl.textContent = 'Current Length: ' + (typeof snake2Body !== 'undefined' && snake2Body ? snake2Body.length : 0);
+    }
+
+    const p2GameOverEl = document.getElementById('p2GameOverDisplay');
+    if (!p2GameOverEl) {
+        console.error("[DEBUG_STARTUP] updateGameStatusDisplay: Element 'p2GameOverDisplay' NOT FOUND!");
+    } else {
+        p2GameOverEl.style.display = p2_gameOver ? 'block' : 'none';
+    }
+    console.log("[DEBUG_STARTUP] updateGameStatusDisplay: End");
 }
 
 
@@ -72,6 +120,7 @@ function updateGameStatusDisplay() {
  * Initializes or resets the game state for a new game (both players).
  */
 function initGame() {
+    console.log("[DEBUG_STARTUP] initGame: Start");
     gameStarted = true;
     isPaused = false;
     gameOver = false; // Overall game over
@@ -94,22 +143,28 @@ function initGame() {
     }
     gameSpeed = 200;
 
+    console.log("[DEBUG_STARTUP] initGame: Calling resetSnake1");
     resetSnake1();
+    console.log("[DEBUG_STARTUP] initGame: Calling resetSnake2");
     resetSnake2();
 
+    console.log("[DEBUG_STARTUP] initGame: Calling startNewRoundForPlayer(1)");
     startNewRoundForPlayer(1); // Start P1's first round
+    console.log("[DEBUG_STARTUP] initGame: Calling startNewRoundForPlayer(2)");
     startNewRoundForPlayer(2); // Start P2's first round
 
-    // generateNewFood(); // Called by startNewRound functions indirectly or directly
+    // generateNewFood(); // Called by startNewRound functions
 
     if (gameIntervalId) {
         clearInterval(gameIntervalId);
     }
+    console.log("[DEBUG_STARTUP] game.js/initGame: Setting up setInterval. gameSpeed = " + (typeof gameSpeed !== 'undefined' ? gameSpeed : "undef_gameSpeed") + ", gameLoop function name: " + (typeof updateGame !== 'undefined' && updateGame ? updateGame.name : "undef_updateGame_fn"));
     gameIntervalId = setInterval(updateGame, gameSpeed);
 
-    updateGameStatusDisplay(); // Initial display update
+    // updateGameStatusDisplay(); // Initial display update, called by startNewRoundForPlayer
     drawGame();
     if (typeof updateControlBtnText === 'function') updateControlBtnText();
+    console.log("[DEBUG_STARTUP] initGame: End");
 }
 
 /**
@@ -129,9 +184,10 @@ function startNewRoundForPlayer(playerNum) {
         p2_targetLength = currentSnakeLength + Math.floor(Math.random() * 5) + 3;
         console.log(`[GAME LOGIC] P2 New Round. Target: ${p2_targetLength}, Current Len: ${currentSnakeLength}`);
     }
-    // Food is generated once for both players, or could be player-specific if desired
-    generateNewFood(); // Assuming this generates food for the whole game board
-    updateGameStatusDisplay();
+    // Food is generated once for both players.
+    // Called AFTER individual player round states are set.
+    generateNewFood();
+    updateGameStatusDisplay(); // Update UI with new round info and food
 }
 
 
@@ -139,7 +195,11 @@ function startNewRoundForPlayer(playerNum) {
  * Main game drawing function.
  */
 function drawGame() {
-    if (!ctx || !canvas) return;
+    console.log("[DEBUG_STARTUP] drawGame: Start. gameStarted = " + gameStarted + ", gameOver = " + gameOver + ", p1_gameOver = " + p1_gameOver + ", p2_gameOver = " + p2_gameOver);
+    if (!ctx || !canvas) {
+        console.error("[DEBUG_STARTUP] drawGame: ctx or canvas is undefined! Skipping draw.");
+        return;
+    }
 
     if (!gameStarted) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -182,14 +242,13 @@ function updateGame() {
     // --- Player 1 Logic ---
     if (gameStarted && !isPaused && !p1_gameOver) {
         const head1 = moveSnake1();
-        if (head1) { // Ensure head1 is not null (snake1Body might be empty if logic error)
+        if (head1) {
             if (checkWallCollision(head1, getSnakeWidthP1()) || checkSelfCollision(head1, snake1Body)) {
                 p1_gameOver = true;
-                console.log("Player 1 Game Over - Collision");
+                console.log("Player 1 Game Over - Wall/Self Collision");
             } else {
                 const eatenFoodItem = checkFoodEaten(head1);
                 if (eatenFoodItem) {
-                    // Simplified: P1 eats, P1 processes effects. P2 interaction with food later.
                 // Remove eaten food from activeFoods - TODO: This needs to be handled carefully
                 // For now, assume checkFoodEaten returns the item, and game.js removes it
                 // and then calls generateNewFood IF NEEDED (e.g. if all food gone or for competitive mode)
@@ -210,42 +269,48 @@ function updateGame() {
                         if (getConsecutiveRedBlocksP1() >= 2) {
                             incrementSnakeWidthP1();
                             resetConsecutiveRedBlocksP1();
-                            if (getSnakeWidthP1() > 2) { p1_gameOver = true; console.log("Player 1 Game Over - Too Wide by Fattening"); }
+                    if (getSnakeWidthP1() > 2) { // This was the "too wide" game over, now just a state for P1
+                        p1_gameOver = true;
+                        console.log("Player 1 Game Over - Too Wide by Fattening (width: " + getSnakeWidthP1() + ")");
+                    }
                         }
                     } else {
                         resetConsecutiveRedBlocksP1();
                     }
 
-                    if (eatenFoodItem.type.effect === 'game_over') { p1_gameOver = true; console.log("Player 1 Game Over - Obstacle");}
-                    if (eatenFoodItem.type.transform) applyTransformationP1(eatenFoodItem.type.transform);
+                    if (eatenFoodItem.type.effect === 'game_over') {
+                        p1_gameOver = true; console.log("Player 1 Game Over - Obstacle");
+                    }
+                    if (eatenFoodItem.type.transform) {
+                        applyTransformationP1(eatenFoodItem.type.transform);
+                    }
 
-                    let p1_grewByDefault = true;
+                    // Length effects for P1
                     if (eatenFoodItem.type.effect === 'double_length') {
                         const s1l = snake1Body.length; for(let i=0; i<s1l;i++) snake1Body.push({...snake1Body[snake1Body.length-1]});
-                        p1_grewByDefault = false; // Length handled by effect
                     } else if (eatenFoodItem.type.effect === 'halve_length') {
                         if(snake1Body.length > 2) {const t1l = Math.max(1, Math.floor(snake1Body.length/2)); while(snake1Body.length > t1l) snake1Body.pop();}
-                        p1_grewByDefault = false; // Length handled by effect
                     }
-                    // If p1_grewByDefault is true, snake grows by not popping tail.
+                    // Default growth by not popping tail is handled by foodEatenThisTick logic later
 
-                    if (!p1_gameOver) { // Check if game over before proceeding with round logic
+                    if (!p1_gameOver) {
                         if (snake1Body.length >= p1_targetLength) {
                             p1_roundsAchieved++;
                             if (p1_roundsAchieved >= maxRoundsPerGame) {
-                                p1_gameOver = true; // P1 wins their track
+                                p1_gameOver = true;
                                 console.log("Player 1 Wins their track!");
                             } else {
-                                startNewRoundForPlayer(1);
+                                startNewRoundForPlayer(1); // This calls generateNewFood
                             }
                         } else if (p1_foodEatenThisRound >= maxFoodPerRound) {
                             p1_gameOver = true;
                             console.log("Player 1 Game Over - Out of food for round");
                         }
                     }
-                    generateNewFood();
+                    // generateNewFood() is called after processing P2 as well, if any food was eaten by anyone.
                 } else { // No food eaten by P1
-                    if (snake1Body.length > 1) snake1Body.pop();
+                    // Only pop if no food was eaten by P1 this tick.
+                    // The actual pop decision is made after both players attempt to eat.
                 }
             }
         }
@@ -254,13 +319,14 @@ function updateGame() {
     // --- Player 2 Logic ---
     if (gameStarted && !isPaused && !p2_gameOver) {
         const head2 = moveSnake2();
-        if (head2) { // Ensure head2 is not null
+        if (head2) {
             if (checkWallCollision(head2, getSnakeWidthP2()) || checkSelfCollision(head2, snake2Body)) {
                 p2_gameOver = true;
-                console.log("Player 2 Game Over - Collision");
+                console.log("Player 2 Game Over - Wall/Self Collision");
             } else {
                 const eatenFoodItemP2 = checkFoodEaten(head2);
                 if (eatenFoodItemP2) {
+                    foodEatenThisTick = true; // Mark that some food was eaten this tick (by P2)
                     const foodIndex = activeFoods.findIndex(f => f.x === eatenFoodItemP2.x && f.y === eatenFoodItemP2.y);
                     if (foodIndex > -1) activeFoods.splice(foodIndex, 1);
 
@@ -272,44 +338,68 @@ function updateGame() {
                         if (getConsecutiveRedBlocksP2() >= 2) {
                             incrementSnakeWidthP2();
                             resetConsecutiveRedBlocksP2();
-                            if(getSnakeWidthP2() > 2) p2_gameOver = true; console.log("Player 2 Game Over - Too Wide by Fattening");
+                            if(getSnakeWidthP2() > 2) {
+                                p2_gameOver = true; console.log("Player 2 Game Over - Too Wide by Fattening (width: " + getSnakeWidthP2() + ")");
+                            }
                         }
                     } else {
                         resetConsecutiveRedBlocksP2();
                     }
 
-                    if (eatenFoodItemP2.type.effect === 'game_over') { p2_gameOver = true; console.log("Player 2 Game Over - Obstacle"); }
-                    if (eatenFoodItemP2.type.transform) applyTransformationP2(eatenFoodItemP2.type.transform);
-
-                    let p2_grewByDefault = true;
-                    if (eatenFoodItemP2.type.effect === 'double_length') {
-                        const s2l = snake2Body.length; for(let i=0; i<s2l;i++) snake2Body.push({...snake2Body[snake2Body.length-1]});
-                        p2_grewByDefault = false;
-                    } else if (eatenFoodItemP2.type.effect === 'halve_length') {
-                        if(snake2Body.length > 2) {const t2l = Math.max(1, Math.floor(snake2Body.length/2)); while(snake2Body.length > t2l) snake2Body.pop();}
-                        p2_grewByDefault = false;
+                    if (eatenFoodItemP2.type.effect === 'game_over') {
+                        p2_gameOver = true; console.log("Player 2 Game Over - Obstacle");
+                    }
+                    if (eatenFoodItemP2.type.transform) {
+                        applyTransformationP2(eatenFoodItemP2.type.transform);
                     }
 
-                    if (!p2_gameOver) { // Check if game over before round logic
+                    if (eatenFoodItemP2.type.effect === 'double_length') {
+                        const s2l = snake2Body.length; for(let i=0; i<s2l;i++) snake2Body.push({...snake2Body[snake2Body.length-1]});
+                    } else if (eatenFoodItemP2.type.effect === 'halve_length') {
+                        if(snake2Body.length > 2) {const t2l = Math.max(1, Math.floor(snake2Body.length/2)); while(snake2Body.length > t2l) snake2Body.pop();}
+                    }
+
+                    if (!p2_gameOver) {
                         if (snake2Body.length >= p2_targetLength) {
                             p2_roundsAchieved++;
                             if (p2_roundsAchieved >= maxRoundsPerGame) {
                                 p2_gameOver = true; console.log("Player 2 Wins their track!");
                             } else {
-                                startNewRoundForPlayer(2);
+                                startNewRoundForPlayer(2); // This calls generateNewFood
                             }
                         } else if (p2_foodEatenThisRound >= maxFoodPerRound) {
                             p2_gameOver = true; console.log("Player 2 Game Over - Out of food");
                         }
                     }
-                    generateNewFood();
+                    // generateNewFood() is called after processing P2 as well, if any food was eaten by anyone.
                 } else { // No food eaten by P2
-                    if (snake2Body.length > 1) snake2Body.pop();
+                    // Only pop if no food was eaten by P2 this tick.
                 }
             }
         }
     }
 
+    // Tail popping logic based on whether any food was eaten this tick
+    if (foodEatenThisTick) {
+        generateNewFood(); // Regenerate all food if any food was eaten
+        // If P1 ate, its tail is not popped (implicit growth or handled by effect)
+        // If P1 did not eat, but P2 did, P1's tail should be popped. This needs per-player foodEaten flag.
+        // This is getting complex. Simpler: if a player eats, *their* tail is not popped.
+        // The current structure: moveSnakeX unshifts. If no food eaten by that player, pop.
+        // If food eaten by that player, effects are applied, then new food for everyone.
+        // The current `foodEatenThisTick` is global for the tick.
+
+        // Let's adjust pop logic inside player blocks:
+        // Inside P1 block, after food processing:
+        // if (!p1_ate_this_specific_food_item_this_tick_AND_effect_was_not_halve) { if (snake1Body.length > 1) snake1Body.pop(); }
+        // This is already implicitly handled: if eatenFoodItem is null, it goes to the else and pops.
+        // If eatenFoodItem is NOT null, it does NOT go to the else and does NOT pop. This is the default grow.
+        // The length effects (double, halve) then adjust this. This seems fine.
+        // The main `foodEatenThisTick` flag is for the `generateNewFood()` call.
+    } else { // NO food was eaten by ANY player this tick
+        if (!p1_gameOver && snake1Body.length > 1) snake1Body.pop();
+        if (!p2_gameOver && snake2Body.length > 1) snake2Body.pop();
+    }
 
     // Snake vs Snake collision logic
     if (gameStarted && !isPaused && !p1_gameOver && !p2_gameOver && snake1Body.length > 0 && snake2Body.length > 0) {

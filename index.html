@@ -73,20 +73,30 @@
   <!-- NOTE: "background_music.mp3" is a placeholder. Replace with a valid audio file path for music to play. -->
   <audio id="bgMusic" src="background_music.mp3" loop></audio>
 
-  <!-- Scripts will be loaded here -->
-  <script src="food.js"></script>
-  <script src="snake.js"></script>
-  <script src="game.js"></script>
-
+  <!-- Define global canvas/grid vars BEFORE loading external scripts that might use them -->
   <script>
     // Essential global variables for canvas and game setup
+    // These must be defined before food.js, snake.js, game.js are loaded if they use these at parse time.
+    // The canvas element must exist in the DOM before this script runs.
+    // This script block should be placed after the canvas element, or within DOMContentLoaded.
+    // For simplicity, assuming this entire script block (including this part) is at the end of <body>.
     const canvas = document.getElementById("game");
     const ctx = canvas.getContext("2d");
     const box = 10; // New cell size
     const rows = canvas.height / box; // Number of rows (Y dimension)
     const cols = canvas.width / box;  // Number of columns (X dimension)
+    console.log("[DEBUG_STARTUP] index.html: Initial globals defined. Box: " + box + ", Rows: " + rows + ", Cols: " + cols);
+  </script>
 
+  <!-- External game logic scripts -->
+  <script src="food.js"></script>
+  <script src="snake.js"></script>
+  <script src="game.js"></script>
+
+  <!-- Main inline script for UI, event listeners, and starting the game -->
+  <script>
     // UI Elements & Event Listeners specific to index.html
+    // Note: canvas, ctx, box, rows, cols are already defined in the script block above.
     const bgMusic = document.getElementById("bgMusic");
     const playPauseBtn = document.getElementById("playPauseBtn");
     const difficultyButtons = document.querySelectorAll(".difficulty-btn");
@@ -111,6 +121,7 @@
     // Initialize food and draw initial game screen (start message)
     // food.js and game.js functions are now globally available.
     document.addEventListener('DOMContentLoaded', () => {
+        console.log("[DEBUG_STARTUP] index.html: DOMContentLoaded: Initial drawGame call preparing to show start screen.");
         drawGame(); // Call from game.js to draw the initial "Press Start Game" screen.
         updateControlBtnText(); // Set initial text for controlBtn
         updateGameStatusDisplay(); // Initialize P1/P2 status displays
