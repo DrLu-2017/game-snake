@@ -43,7 +43,7 @@
   </div>
 
   <!-- Rules Container -->
-  <div id="rulesContainer" style="display: none;">
+  <div id="rulesContainer" style="display: block; margin-top: 15px; padding: 10px; border: 1px solid #555; border-radius: 5px; max-width: 500px; text-align: left; background-color: #222;">
       <!-- Content will be populated by JavaScript -->
   </div>
 
@@ -136,7 +136,7 @@
                 <li><strong>Apple (Yellow):</strong> Effect: Score bonus (less relevant in Target Length mode, but still gives +5 to traditional score if tracked). Snake temporarily changes color.</li>
                 <li><strong>Banana (Orange):</strong> Effect: Temporary speed boost. (Base score: +2).</li>
                 <li><strong>Obstacle (Gray):</strong> Effect: Game Over!</li>
-                <li><strong>Red Block (Dark Red):</strong> Effect (Length): Doubles snake's current length. Effect (Width/Fattening): Eat 2 consecutively for width increase. Width > 2 units is Game Over. (Base score: +2).</li>
+                <li><strong>Red Block (Dark Red):</strong> Effect (Length): Doubles snake's current length. Effect (Width/Fattening): Eat 2 consecutively for width increase (up to a maximum width). Eating any other food type resets the consecutive counter. (Base score: +2).</li>
                 <li><strong>Green Block (Dark Green):</strong> Effect: Halves snake's length (if > 2 segments). (Base score: +2).</li>
             </ul>
 
@@ -153,6 +153,13 @@
                 toggleRulesBtn.textContent = 'Show Rules';
             }
         });
+
+        // Update button text based on initial rules visibility
+        if (rulesContainer.style.display === 'block') {
+            toggleRulesBtn.textContent = 'Hide Rules';
+        } else {
+            toggleRulesBtn.textContent = 'Show Rules';
+        }
     });
 
     // Event Listener for the new controlBtn (replaces old startGameBtn listener)

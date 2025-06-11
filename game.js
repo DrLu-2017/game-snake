@@ -179,11 +179,12 @@ function updateGame() {
                 console.log("[DEBUG][game.js] Resetting consecutive count after width increment. Count: " + getConsecutiveRedBlocks());
 
                 // NEW: Check for game over due to excessive width
-                if (getSnakeWidth() > 2) { // getSnakeWidth() is from snake.js
-                    console.log("[GAME OVER] Snake width exceeded 2! Width: " + getSnakeWidth());
-            triggerEndGame(false);
-                    return;
-                }
+                // This check is REMOVED as per subtask instructions.
+                // if (getSnakeWidth() > 2) {
+                //     console.log("[GAME OVER] Snake width exceeded 2! Width: " + getSnakeWidth());
+                //     triggerEndGame(false);
+                //     return;
+                // }
             }
         } else {
             // Only reset if it's not a RED_BLOCK. If it was a RED_BLOCK but count < 2, we don't reset here.
@@ -301,8 +302,15 @@ function triggerEndGame(isWin) {
     } else if (isWin === false) { // Explicitly check for false (lost Target Length mode)
          if (foodEatenThisRound >= maxFoodPerRound && snake.length < targetLength) {
             endMessage = "Target Not Reached: Ran out of food for the round! Game Over.";
-        } else if (getSnakeWidth() > 2) { // This check is now also in updateGame before triggerEndGame
-             endMessage = "Game Over: Snake too wide!";
+        } else if (getSnakeWidth() > 2 && isWin === false) { // Check if game over was due to width if isWin is false
+             // This specific message for "too wide" might be redundant if the primary trigger is removed
+             // and other conditions (like wall collision for a wide snake) cause a generic game over.
+             // For now, keeping it to show the game *could* have known it was too wide if that logic was active.
+             // However, since the trigger for width > 2 causing game over is removed from updateGame,
+             // this specific message in triggerEndGame might not be hit for that reason anymore.
+             // It would only be hit if triggerEndGame(false) was called *after* width became > 2 for some other reason.
+             // Let's simplify the message logic in triggerEndGame for now.
+             endMessage = "Game Over: Snake too wide!"; // This might become an orphaned message if not triggered.
         }
          else {
             endMessage = "Target Not Reached! Game Over.";
