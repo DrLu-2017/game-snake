@@ -115,6 +115,20 @@
 
   <!-- Main inline script for UI, event listeners, and starting the game -->
   <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // This will run after the document is fully loaded.
+        try {
+            const mainHeading = document.querySelector('h1');
+            if (mainHeading) {
+                mainHeading.textContent = 'JS IS RUNNING!';
+            } else {
+                console.error('H1 element not found for JS test.');
+            }
+        } catch (e) {
+            console.error('Error in basic JS execution test: ', e);
+        }
+    });
+
     // UI Elements & Event Listeners specific to index.html
     // Note: canvas, ctx, box, rows, cols are already defined in the script block above.
     const bgMusic = document.getElementById("bgMusic");
@@ -141,13 +155,15 @@
     // Initialize food and draw initial game screen (start message)
     // food.js and game.js functions are now globally available.
     document.addEventListener('DOMContentLoaded', () => {
+      try {
         console.log("[DEBUG_STARTUP] index.html: DOMContentLoaded: Initial drawGame call preparing to show start screen.");
         drawGame(); // Call from game.js to draw the initial "Press Start Game" screen.
         updateControlBtnText(); // Set initial text for controlBtn
         updateGameStatusDisplay(); // Initialize P1/P2 status displays
 
         // Populate Rules
-        rulesContainer.innerHTML = `
+        if (rulesContainer && typeof maxRoundsPerGame !== 'undefined' && typeof maxFoodPerRound !== 'undefined') {
+            rulesContainer.innerHTML = `
             <h2>Welcome to Snake!</h2>
 
             <h3>Game Mode: Two-Player Target Length</h3>
@@ -218,96 +234,185 @@
 
             <p>Have fun playing together!</p>
         `; // Removed "External Button" section as it's not implemented yet.
+        } else {
+            console.error("Error populating rules: rulesContainer or global game parameters (maxRoundsPerGame, maxFoodPerRound) not found.");
+        }
 
         // Rules Toggle Button Listener
-        toggleRulesBtn.addEventListener('click', () => {
-            if (rulesContainer.style.display === 'none' || rulesContainer.style.display === '') {
-                rulesContainer.style.display = 'block';
-                toggleRulesBtn.textContent = 'Hide Rules';
-            } else {
-                rulesContainer.style.display = 'none';
-                toggleRulesBtn.textContent = 'Show Rules';
-            }
-        });
+        if (toggleRulesBtn && rulesContainer) {
+            toggleRulesBtn.addEventListener('click', () => {
+                try { // Inner try-catch for the callback logic
+                    if (rulesContainer.style.display === 'none' || rulesContainer.style.display === '') {
+                        rulesContainer.style.display = 'block';
+                        toggleRulesBtn.textContent = 'Hide Rules';
+                    } else {
+                        rulesContainer.style.display = 'none';
+                        toggleRulesBtn.textContent = 'Show Rules';
+                    }
+                } catch (e) {
+                    console.error("Error in toggleRulesBtn click callback:", e);
+                }
+            });
 
-        // Update button text based on initial rules visibility
-        if (rulesContainer.style.display === 'block') {
-            toggleRulesBtn.textContent = 'Hide Rules';
+            // Update button text based on initial rules visibility
+            try { // Inner try-catch for this specific logic
+                if (rulesContainer.style.display === 'block') {
+                    toggleRulesBtn.textContent = 'Hide Rules';
+                } else {
+                    toggleRulesBtn.textContent = 'Show Rules';
+                }
+            } catch (e) {
+                console.error("Error setting initial toggleRulesBtn text:", e);
+            }
         } else {
-            toggleRulesBtn.textContent = 'Show Rules';
+            console.error("toggleRulesBtn or rulesContainer not found for event listener attachment or initial text setting.");
         }
+      } catch (e) {
+        console.error("Error in main DOMContentLoaded setup:", e);
+      }
     });
 
     // Event Listener for the new controlBtn (replaces old startGameBtn listener)
-    controlBtn.addEventListener('click', function() {
-        if (!gameStarted) {
-            initGame(); // from game.js
-            difficultyButtons.forEach(btn => btn.style.display = 'inline-block'); // Show difficulty buttons
-        } else if (gameOver) {
-            initGame(); // from game.js
-            difficultyButtons.forEach(btn => btn.style.display = 'inline-block'); // Show difficulty buttons
+    try {
+        if (controlBtn) {
+            controlBtn.addEventListener('click', function() {
+                try { // Inner try-catch for the callback logic
+                    if (!gameStarted) {
+                        initGame(); // from game.js
+                        if (difficultyButtons) difficultyButtons.forEach(btn => btn.style.display = 'inline-block'); // Show difficulty buttons
+                    } else if (gameOver) {
+                        initGame(); // from game.js
+                        if (difficultyButtons) difficultyButtons.forEach(btn => btn.style.display = 'inline-block'); // Show difficulty buttons
+                    } else {
+                        togglePauseGame(); // from game.js
+                    }
+                    // updateControlBtnText() is called by initGame/togglePauseGame in game.js
+                } catch (e) {
+                    console.error("Error in controlBtn click callback:", e);
+                }
+            });
         } else {
-            togglePauseGame(); // from game.js
+            console.error("controlBtn not found for event listener attachment.");
         }
-        // updateControlBtnText() is called by initGame/togglePauseGame in game.js
-    });
+    } catch (e) {
+        console.error("Error attaching event listener for controlBtn:", e);
+    }
 
     // Event Listener for Keyboard Controls
-    document.addEventListener("keydown", e => {
-      if (e.key === " ") {
-        togglePauseGame();
-        e.preventDefault();
-      } else if (gameStarted && !isPaused) {
-        // Player 1 Controls (Arrow Keys)
-        if (e.key === "ArrowUp") { changeDirectionP1('up'); }
-        else if (e.key === "ArrowDown") { changeDirectionP1('down'); }
-        else if (e.key === "ArrowLeft") { changeDirectionP1('left'); }
-        else if (e.key === "ArrowRight") { changeDirectionP1('right'); }
+    try {
+        document.addEventListener("keydown", e => {
+            try { // Inner try-catch for the callback logic
+                if (e.key === " ") {
+                    togglePauseGame();
+                    e.preventDefault();
+                } else if (gameStarted && !isPaused) {
+                    // Player 1 Controls (Arrow Keys)
+                    if (e.key === "ArrowUp") { changeDirectionP1('up'); }
+                    else if (e.key === "ArrowDown") { changeDirectionP1('down'); }
+                    else if (e.key === "ArrowLeft") { changeDirectionP1('left'); }
+                    else if (e.key === "ArrowRight") { changeDirectionP1('right'); }
 
-        // Player 2 Controls (WASD)
-        else if (e.key.toLowerCase() === 'w' && !p2_gameOver) { changeDirectionP2('up'); }
-        else if (e.key.toLowerCase() === 's' && !p2_gameOver) { changeDirectionP2('down'); }
-        else if (e.key.toLowerCase() === 'a' && !p2_gameOver) { changeDirectionP2('left'); }
-        else if (e.key.toLowerCase() === 'd' && !p2_gameOver) { changeDirectionP2('right'); }
-      }
-    });
+                    // Player 2 Controls (WASD)
+                    else if (e.key.toLowerCase() === 'w' && !p2_gameOver) { changeDirectionP2('up'); }
+                    else if (e.key.toLowerCase() === 's' && !p2_gameOver) { changeDirectionP2('down'); }
+                    else if (e.key.toLowerCase() === 'a' && !p2_gameOver) { changeDirectionP2('left'); }
+                    else if (e.key.toLowerCase() === 'd' && !p2_gameOver) { changeDirectionP2('right'); }
+                }
+            } catch (er) { // Changed 'e' to 'er' to avoid conflict with event 'e'
+                console.error("Error in keydown event callback:", er);
+            }
+        });
+    } catch (e) {
+        console.error("Error attaching keydown event listener for document:", e);
+    }
 
     // Event Listener for Touchscreen Direction Buttons (Player 1 only for now)
     // This function is called by onclick attributes in HTML
     function setDirection(direction) { // This controls P1 by default
-      if (gameStarted && !isPaused && !p1_gameOver) {
-        changeDirectionP1(direction);
+      try {
+        if (gameStarted && !isPaused && !p1_gameOver) {
+          changeDirectionP1(direction);
+        }
+      } catch (e) {
+        console.error("Error in setDirection function:", e);
       }
     }
 
     // Event Listeners for Difficulty Buttons
-    difficultyButtons.forEach(button => {
-      button.addEventListener("click", () => {
-        setGameDifficulty(button.dataset.level); // from game.js
-      });
-    });
+    try {
+        if (difficultyButtons) {
+            difficultyButtons.forEach(button => {
+                if (button) {
+                    button.addEventListener("click", () => {
+                        try { // Inner try-catch for the callback logic
+                            setGameDifficulty(button.dataset.level); // from game.js
+                        } catch (e) {
+                            console.error("Error in difficulty button click callback:", e);
+                        }
+                    });
+                } else {
+                    console.error("A difficulty button element was not found during forEach loop.");
+                }
+            });
+        } else {
+            console.error("difficultyButtons NodeList not found for event listener attachment.");
+        }
+    } catch (e) {
+        console.error("Error attaching event listeners for difficultyButtons:", e);
+    }
 
     // Music Play/Pause Button
-    playPauseBtn.addEventListener("click", () => {
-      if (bgMusic.paused) {
-        bgMusic.play();
-        playPauseBtn.textContent = "Pause Music";
-      } else {
-        bgMusic.pause();
-        playPauseBtn.textContent = "Play Music";
-      }
-    });
+    try {
+        if (playPauseBtn && bgMusic) {
+            playPauseBtn.addEventListener("click", () => {
+                try { // Inner try-catch for the callback logic
+                    if (bgMusic.paused) {
+                        bgMusic.play();
+                        playPauseBtn.textContent = "Pause Music";
+                    } else {
+                        bgMusic.pause();
+                        playPauseBtn.textContent = "Play Music";
+                    }
+                } catch (e) {
+                    console.error("Error in playPauseBtn click callback:", e);
+                }
+            });
+        } else {
+            console.error("playPauseBtn or bgMusic not found for event listener attachment.");
+        }
+    } catch (e) {
+        console.error("Error attaching event listener for playPauseBtn:", e);
+    }
 
     // Current Time Display
     function updateTime() {
-      const now = new Date();
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const seconds = String(now.getSeconds()).padStart(2, '0');
-      currentTimeDisplay.innerHTML = `${hours}:${minutes}:${seconds}`;
+      // It's good practice to check if currentTimeDisplay exists within the function
+      // especially if it's called by setInterval and the element might disappear.
+      try {
+        if (currentTimeDisplay) {
+          const now = new Date();
+          const hours = String(now.getHours()).padStart(2, '0');
+          const minutes = String(now.getMinutes()).padStart(2, '0');
+          const seconds = String(now.getSeconds()).padStart(2, '0');
+          currentTimeDisplay.innerHTML = `${hours}:${minutes}:${seconds}`;
+        }
+      } catch (e) {
+        console.error("Error in updateTime function body:", e);
+        // Optionally, could clear interval here if error is persistent
+      }
     }
-    updateTime(); // Initial call
-    setInterval(updateTime, 1000); // Update every second
+
+    try {
+        // updateTime is called immediately and then via setInterval
+        if (typeof currentTimeDisplay !== 'undefined' && currentTimeDisplay) { // Check if currentTimeDisplay exists
+             updateTime(); // Initial call
+             setInterval(updateTime, 1000); // Update every second
+        } else {
+            console.error("currentTimeDisplay element not found for time updates.");
+        }
+    } catch (e) {
+        console.error("Error in initial time update or setInterval setup:", e);
+    }
 
     // Swipe Controls for Mobile
     let touchStartX = 0;
@@ -319,85 +424,75 @@
     const doubleTapDelay = 300; // Milliseconds
     const tapThreshold = 10; // Max pixels to move for it to be considered a tap
 
-    canvas.addEventListener('touchstart', function(e) {
-        touchStartX = e.touches[0].clientX;
-        touchStartY = e.touches[0].clientY;
-        // Using preventDefault here might interfere with double tap,
-        // as it can prevent subsequent touchend in some cases if not handled carefully.
-        // Let's manage preventDefault in touchend conditionally.
-    }, false);
+    try {
+        // Check if canvas exists (it should, given earlier checks, but good practice for standalone blocks)
+        if (canvas) {
+            canvas.addEventListener('touchstart', function(e) {
+                try {
+                    touchStartX = e.touches[0].clientX;
+                    touchStartY = e.touches[0].clientY;
+                } catch (er) { console.error("Error in touchstart callback:", er); }
+            }, false);
 
-    canvas.addEventListener('touchmove', function(e) {
-        // If there's enough movement, prevent default to avoid scrolling during a swipe.
-        if (gameStarted && !isPaused) { // Only consider preventing scroll if game is active
-            const currentX = e.touches[0].clientX;
-            const currentY = e.touches[0].clientY;
-            const diffX = currentX - touchStartX;
-            const diffY = currentY - touchStartY;
-            // If swipe is predominantly horizontal or vertical and exceeds a small threshold
-            if (Math.abs(diffX) > tapThreshold || Math.abs(diffY) > tapThreshold) {
-                // e.preventDefault(); // This can be too aggressive, let's test without first.
-            }
+            canvas.addEventListener('touchmove', function(e) {
+                // Minimal logic, direct error less likely here unless e.touches is problematic
+                // For complex logic, a try-catch would be good.
+            }, false);
+
+            canvas.addEventListener('touchend', function(e) {
+                try {
+                    touchEndX = e.changedTouches[0].clientX;
+                    touchEndY = e.changedTouches[0].clientY;
+
+                    const diffX = touchEndX - touchStartX;
+                    const diffY = touchEndY - touchStartY;
+                    const currentTime = new Date().getTime();
+                    const tapTimeDifference = currentTime - lastTapTime;
+
+                    if (Math.abs(diffX) < tapThreshold && Math.abs(diffY) < tapThreshold) {
+                        e.preventDefault();
+                        if (tapTimeDifference < doubleTapDelay && tapTimeDifference > 0) {
+                            if (gameStarted && !gameOver) {
+                                togglePauseGame();
+                            } else {
+                                const startGameButton = document.getElementById('startGameBtn'); // This ID might be legacy
+                                if(startGameButton) startGameButton.style.display = 'none';
+                                if (difficultyButtons) difficultyButtons.forEach(btn => btn.style.display = 'inline-block');
+                                initGame();
+                            }
+                            lastTapTime = 0;
+                        } else {
+                            lastTapTime = currentTime;
+                        }
+                    } else {
+                        if (!gameStarted || isPaused) return;
+
+                        if (Math.abs(diffX) > Math.abs(diffY)) {
+                            if (diffX > minSwipeDistance) { changeDirection('right'); }
+                            else if (diffX < -minSwipeDistance) { changeDirection('left'); }
+                        } else if (Math.abs(diffY) > Math.abs(diffX)) {
+                            if (diffY > minSwipeDistance) { changeDirection('down'); }
+                            else if (diffY < -minSwipeDistance) { changeDirection('up'); }
+                        }
+                    }
+                } catch (er) { console.error("Error in touchend callback:", er); }
+            }, false);
+
+            // Canvas click/tap to start game (also on canvas)
+            canvas.addEventListener('click', function() {
+                try {
+                    if (!gameStarted) {
+                        initGame();
+                        if (difficultyButtons) difficultyButtons.forEach(btn => btn.style.display = 'inline-block');
+                    }
+                } catch (er) { console.error("Error in canvas click callback:", er); }
+            });
+        } else {
+            console.error("Canvas element not found for touch/click event listener attachment.");
         }
-    }, false);
-
-    canvas.addEventListener('touchend', function(e) {
-        touchEndX = e.changedTouches[0].clientX;
-        touchEndY = e.changedTouches[0].clientY;
-
-        const diffX = touchEndX - touchStartX;
-        const diffY = touchEndY - touchStartY;
-        const currentTime = new Date().getTime();
-        const tapTimeDifference = currentTime - lastTapTime;
-
-        // Check if it's a tap (minimal movement)
-        if (Math.abs(diffX) < tapThreshold && Math.abs(diffY) < tapThreshold) {
-            e.preventDefault(); // Prevent default actions for taps (like zoom)
-            if (tapTimeDifference < doubleTapDelay && tapTimeDifference > 0) {
-                // Double tap
-                if (gameStarted && !gameOver) {
-                    togglePauseGame(); // Pause/resume active game
-                } else {
-                    // If game not started, or is over, double tap acts like "Start Game"
-                    // Need to ensure UI elements like start button are handled correctly by initGame
-                    const startGameButton = document.getElementById('startGameBtn');
-                    if(startGameButton) startGameButton.style.display = 'none'; // Hide if visible
-                    difficultyButtons.forEach(btn => btn.style.display = 'inline-block'); // Show
-                    initGame();
-                }
-                lastTapTime = 0; // Reset lastTapTime to prevent triple tap from acting as double
-            } else {
-                // Single tap
-                lastTapTime = currentTime;
-            }
-        } else { // Else, it's a swipe
-            if (!gameStarted || isPaused) return; // Only process swipes if game is active and not paused
-
-            if (Math.abs(diffX) > Math.abs(diffY)) { // Horizontal swipe
-                if (diffX > minSwipeDistance) {
-                    changeDirection('right');
-                } else if (diffX < -minSwipeDistance) {
-                    changeDirection('left');
-                }
-            } else if (Math.abs(diffY) > Math.abs(diffX)) { // Vertical swipe
-                if (diffY > minSwipeDistance) {
-                    changeDirection('down');
-                } else if (diffY < -minSwipeDistance) {
-                    changeDirection('up');
-                }
-            }
-            // Consider adding e.preventDefault() here for swipes if page scrolling is an issue.
-        }
-    }, false);
-
-    // Canvas click/tap to start game
-    canvas.addEventListener('click', function() {
-        if (!gameStarted) { // gameStarted is global from game.js
-            initGame(); // from game.js
-            difficultyButtons.forEach(btn => btn.style.display = 'inline-block'); // Show difficulty buttons
-            // initGame will call updateControlBtnText via game.js
-        }
-    });
+    } catch (e) {
+        console.error("Error attaching touch/click event listeners for canvas:", e);
+    }
 
     // Ensure difficulty buttons are hidden initially, shown by initGame
     // This should be done once, perhaps after defining difficultyButtons or in DOMContentLoaded

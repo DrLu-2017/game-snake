@@ -256,8 +256,8 @@ function updateGame() {
                 // And generateNewFood in game.js (when food eaten) regenerates ALL food.
 
                 // Temporary: remove the eaten food item from activeFoods list
+                // The duplicate declaration was here and has been removed.
                 const foodIndex = activeFoods.findIndex(f => f.x === eatenFoodItem.x && f.y === eatenFoodItem.y);
-                    const foodIndex = activeFoods.findIndex(f => f.x === eatenFoodItem.x && f.y === eatenFoodItem.y);
                     if (foodIndex > -1) activeFoods.splice(foodIndex, 1);
 
                     p1_foodEatenThisRound++;
