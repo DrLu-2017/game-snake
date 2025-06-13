@@ -59,17 +59,17 @@
   </div> -->
 
   <canvas id="game" width="400" height="400" style="display:none;"></canvas>
-  <div class="buttons" style="display:none;">
-    <button id="toggleRulesBtn" class="btn">Show Rules</button> <!-- Added Rules Button -->
-    <button class="btn" onclick="setDirection('up')">↑</button>
-    <button class="btn" onclick="setDirection('left')">←</button>
-    <button class="btn" onclick="setDirection('down')">↓</button>
-    <button class="btn" onclick="setDirection('right')">→</button>
-    <button id="controlBtn" class="btn">Start Game</button> <!-- ID changed, text updated by JS -->
-    <button id="playPauseBtn" class="btn">Play/Pause Music</button><span style="font-size: 12px; color: #aaa; margin-left: 5px;">(Music: 'background_music.mp3' needed)</span>
-    <button class="btn difficulty-btn" data-level="easy" style="display: none;">Easy</button>
-    <button class="btn difficulty-btn" data-level="medium" style="display: none;">Medium</button>
-    <button class="btn difficulty-btn" data-level="hard" style="display: none;">Hard</button>
+  <div class="buttons" style="display:flex;"> <!-- Changed to display:flex -->
+    <button id="toggleRulesBtn" class="btn" style="display:none;">Show Rules</button> <!-- Added Rules Button, hidden -->
+    <button class="btn" onclick="setDirection('up')" style="display:none;">↑</button> <!-- Hidden -->
+    <button class="btn" onclick="setDirection('left')" style="display:none;">←</button> <!-- Hidden -->
+    <button class="btn" onclick="setDirection('down')" style="display:none;">↓</button> <!-- Hidden -->
+    <button class="btn" onclick="setDirection('right')" style="display:none;">→</button> <!-- Hidden -->
+    <button id="controlBtn" class="btn">Start Game</button> <!-- ID changed, text updated by JS - REMAINS VISIBLE -->
+    <button id="playPauseBtn" class="btn" style="display:none;">Play/Pause Music</button><span style="font-size: 12px; color: #aaa; margin-left: 5px; display:none;">(Music: 'background_music.mp3' needed)</span> <!-- Button and span hidden -->
+    <button class="btn difficulty-btn" data-level="easy" style="display: none;">Easy</button> <!-- Already hidden, remains hidden -->
+    <button class="btn difficulty-btn" data-level="medium" style="display: none;">Medium</button> <!-- Already hidden, remains hidden -->
+    <button class="btn difficulty-btn" data-level="hard" style="display: none;">Hard</button> <!-- Already hidden, remains hidden -->
   </div>
 
   <!-- Rules Container -->
@@ -307,16 +307,44 @@
                         // P2 container visibility will be handled by initGame based on selectedGameMode,
                         // but we can make it 'block' here initially, and initGame can hide it if 1P.
                         const p2Status = document.getElementById('p2StatusContainer');
-                        if (p2Status) p2Status.style.display = 'block';
+                        if (p2Status) p2Status.style.display = 'block'; // Visibility also managed by updateGameStatusDisplay
 
                         const gameCanvas = document.getElementById('game');
                         if (gameCanvas) gameCanvas.style.display = 'block';
 
                         const buttonsDiv = document.querySelector('.buttons');
-                        if (buttonsDiv) buttonsDiv.style.display = 'flex'; // Assuming flex is desired
+                        if (buttonsDiv) {
+                            buttonsDiv.style.display = 'flex'; // Make the main buttons container visible
+
+                            // Show specific buttons that were hidden individually
+                            const toggleRulesBtnElem = document.getElementById('toggleRulesBtn');
+                            if (toggleRulesBtnElem) toggleRulesBtnElem.style.display = 'inline-block';
+
+                            const playPauseBtnElem = document.getElementById('playPauseBtn');
+                            if (playPauseBtnElem) {
+                                playPauseBtnElem.style.display = 'inline-block';
+                                const musicNoteSpan = playPauseBtnElem.nextElementSibling;
+                                if (musicNoteSpan && musicNoteSpan.tagName === 'SPAN') {
+                                    musicNoteSpan.style.display = 'inline';
+                                }
+                            }
+
+                            // Show direction buttons (select by onclick attribute content - fragile but necessary without better selectors)
+                            const allButtonsInContainer = buttonsDiv.querySelectorAll('button.btn');
+                            allButtonsInContainer.forEach(btn => {
+                                const onclickAttr = btn.getAttribute('onclick');
+                                if (onclickAttr && onclickAttr.startsWith("setDirection(")) {
+                                    btn.style.display = 'inline-block';
+                                }
+                            });
+                        }
 
                         const rulesDiv = document.getElementById('rulesContainer');
-                        if (rulesDiv) rulesDiv.style.display = 'block'; // Or 'none' if toggle button should control from start
+                        // Rules container visibility is handled by its own toggle button,
+                        // but we ensure it's 'block' initially when game starts,
+                        // then user can toggle. Or 'none' if toggleRulesBtn should be the only way to show it.
+                        // For now, let's make it block, consistent with other elements.
+                        if (rulesDiv) rulesDiv.style.display = 'block';
 
                         initGame(); // from game.js - this will also handle P2 UI based on selectedGameMode
                         if (difficultyButtons) difficultyButtons.forEach(btn => btn.style.display = 'inline-block'); // Show difficulty buttons
