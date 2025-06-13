@@ -6,6 +6,9 @@
 // Assumes P1 and P2 functions from snake.js are global (e.g., resetSnake1, moveSnake1, applyTransformationP1 etc.)
 // Assumes activeFoods (array from food.js) is global.
 
+const maxRoundsPerGame = 5;
+const maxFoodPerRound = 10;
+
 // --- Game Master State ---
 let gameOver = false; // Shared game over state
 let isPaused = false;
@@ -18,8 +21,9 @@ let p1_targetLength = 0;
 let p1_roundsAchieved = 0;
 let p1_foodEatenThisRound = 0;
 let p1_gameOver = false; // Player-specific game over
-// const maxRoundsPerGame = 5; // Shared
-// const maxFoodPerRound = 10; // Shared
+// These are now defined globally above
+// const maxRoundsPerGame = 5;
+// const maxFoodPerRound = 10;
 
 // --- Player 2 Game State ---
 let p2_targetLength = 0;
@@ -27,7 +31,7 @@ let p2_roundsAchieved = 0;
 let p2_foodEatenThisRound = 0;
 let p2_gameOver = false; // Player-specific game over
 
-// Shared constants for Target Length mode (already in game.js, just for reference)
+// Shared constants for Target Length mode are now defined globally above
 // const maxRoundsPerGame = 5;
 // const maxFoodPerRound = 10;
 
@@ -238,6 +242,7 @@ function updateGame() {
         drawGame();
         return;
     }
+    let foodEatenThisTick = false; // Initialize here
 
     // --- Player 1 Logic ---
     if (gameStarted && !isPaused && !p1_gameOver) {
@@ -249,6 +254,7 @@ function updateGame() {
             } else {
                 const eatenFoodItem = checkFoodEaten(head1);
                 if (eatenFoodItem) {
+                    foodEatenThisTick = true; // Set for P1 food consumption
                 // Remove eaten food from activeFoods - TODO: This needs to be handled carefully
                 // For now, assume checkFoodEaten returns the item, and game.js removes it
                 // and then calls generateNewFood IF NEEDED (e.g. if all food gone or for competitive mode)
