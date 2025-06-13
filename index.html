@@ -72,6 +72,13 @@
     <button class="btn difficulty-btn" data-level="hard" style="display: none;">Hard</button> <!-- Already hidden, remains hidden -->
   </div>
 
+  <div id="mobileControlsContainer" style="display: none;"> <!-- Initially hidden -->
+    <button id="mobileBtnUp" class="mbtn">↑</button>
+    <button id="mobileBtnLeft" class="mbtn">←</button>
+    <button id="mobileBtnRight" class="mbtn">→</button>
+    <button id="mobileBtnDown" class="mbtn">↓</button>
+  </div>
+
   <!-- Rules Container -->
   <div id="rulesContainer" style="display: none; margin-top: 15px; padding: 10px; border: 1px solid #555; border-radius: 5px; max-width: 500px; text-align: left; background-color: #222;">
       <!-- Content will be populated by JavaScript -->
@@ -138,6 +145,11 @@
 
     // UI Elements & Event Listeners specific to index.html
     // Note: canvas, ctx, box, rows, cols are already defined in the script block above.
+
+    function isMobileDevice() {
+      return navigator.maxTouchPoints > 0;
+    }
+
     const bgMusic = document.getElementById("bgMusic");
     const playPauseBtn = document.getElementById("playPauseBtn");
     const difficultyButtons = document.querySelectorAll(".difficulty-btn");
@@ -147,6 +159,7 @@
     const rulesContainer = document.getElementById('rulesContainer');
 
     let selectedGameMode = '1P'; // Default to '1P' as it's checked in HTML
+    let gameModeAtStart = '1P'; // Stores the game mode when the game actually starts
 
     function updateControlBtnText() {
         // Assumes controlBtn, gameStarted, gameOver, isPaused are accessible (gameOver is master)
@@ -164,6 +177,31 @@
     // Initialize food and draw initial game screen (start message)
     // food.js and game.js functions are now globally available.
     document.addEventListener('DOMContentLoaded', () => {
+      const desktopButtonsDiv = document.querySelector('.buttons');
+      const mobileControlsContainer = document.getElementById('mobileControlsContainer');
+
+      if (isMobileDevice()) {
+        // Hide original direction buttons
+        const allDesktopButtons = desktopButtonsDiv.querySelectorAll('button.btn');
+        allDesktopButtons.forEach(btn => {
+          const onclickAttr = btn.getAttribute('onclick');
+          if (onclickAttr && onclickAttr.startsWith("setDirection(")) {
+            btn.style.display = 'none';
+          }
+        });
+        // Mobile controls container visibility will be handled by the game start logic primarily
+        // but ensure it's ready to be shown (display:grid) vs display:none from HTML
+        // mobileControlsContainer.style.display = 'grid'; // This will be handled by controlBtn logic
+
+        // Add event listeners for mobile buttons
+        document.getElementById('mobileBtnUp').onclick = () => setDirection('up');
+        document.getElementById('mobileBtnLeft').onclick = () => setDirection('left');
+        document.getElementById('mobileBtnRight').onclick = () => setDirection('right');
+        document.getElementById('mobileBtnDown').onclick = () => setDirection('down');
+      } else {
+        mobileControlsContainer.style.display = 'none'; // Ensure mobile controls are hidden on desktop
+      }
+
       try {
         console.log("[DEBUG_STARTUP] index.html: DOMContentLoaded: Initial drawGame call preparing to show start screen.");
         drawGame(); // Call from game.js to draw the initial "Press Start Game" screen.
@@ -276,6 +314,36 @@
         } else {
             console.error("toggleRulesBtn or rulesContainer not found for event listener attachment or initial text setting.");
         }
+
+        // Event listeners for player mode radio buttons
+        const playerModeRadios = document.querySelectorAll('input[name="playerMode"]');
+        playerModeRadios.forEach(radio => {
+            radio.addEventListener('change', (event) => {
+                const newMode = event.target.value;
+                const playerModeSelectionUI = document.getElementById('playerModeSelection');
+
+                if (gameStarted && !gameOver && gameModeAtStart === '1P' && newMode === '2P') {
+                    if (confirm("A second player wants to join. Restart the game in 2-player mode?")) {
+                        selectedGameMode = '2P';
+                        gameModeAtStart = '2P'; // Update for future checks
+                        initGame(); // This will handle restarting the game in 2P mode
+                        if (playerModeSelectionUI) playerModeSelectionUI.style.display = 'none';
+                    } else {
+                        // Revert the radio button selection
+                        document.querySelector('input[name="playerMode"][value="1P"]').checked = true;
+                        selectedGameMode = '1P'; // Ensure selectedGameMode is consistent
+                    }
+                } else if (gameStarted && !gameOver && gameModeAtStart === '2P' && newMode === '1P') {
+                    alert("Cannot switch to 1-Player mode while a 2-Player game is in progress. Please restart the game to change modes.");
+                    document.querySelector('input[name="playerMode"][value="2P"]').checked = true;
+                    selectedGameMode = '2P'; // Ensure selectedGameMode is consistent
+                } else { // Game not started, or game is over - allow changing mode for next game
+                    selectedGameMode = newMode;
+                    // gameModeAtStart will be updated when the game actually starts next time
+                }
+            });
+        });
+
       } catch (e) {
         console.error("Error in main DOMContentLoaded setup:", e);
       }
@@ -292,7 +360,8 @@
                         if (selectedModeInput) {
                             selectedGameMode = selectedModeInput.value;
                         }
-                        console.log("Selected game mode:", selectedGameMode);
+                        gameModeAtStart = selectedGameMode; // Set gameModeAtStart here
+                        console.log("Selected game mode at start:", gameModeAtStart);
 
                         // Hide player mode selection UI
                         const playerModeSelectionUI = document.getElementById('playerModeSelection');
@@ -331,12 +400,23 @@
 
                             // Show direction buttons (select by onclick attribute content - fragile but necessary without better selectors)
                             const allButtonsInContainer = buttonsDiv.querySelectorAll('button.btn');
-                            allButtonsInContainer.forEach(btn => {
-                                const onclickAttr = btn.getAttribute('onclick');
-                                if (onclickAttr && onclickAttr.startsWith("setDirection(")) {
-                                    btn.style.display = 'inline-block';
-                                }
-                            });
+                            if (!isMobileDevice()) { // <<<< MODIFIED HERE
+                                allButtonsInContainer.forEach(btn => {
+                                    const onclickAttr = btn.getAttribute('onclick');
+                                    if (onclickAttr && onclickAttr.startsWith("setDirection(")) {
+                                        btn.style.display = 'inline-block';
+                                    }
+                                });
+                            } else { // On mobile, ensure desktop direction buttons remain hidden and show mobile controls
+                                allButtonsInContainer.forEach(btn => { // Ensure desktop ones are hidden
+                                    const onclickAttr = btn.getAttribute('onclick');
+                                    if (onclickAttr && onclickAttr.startsWith("setDirection(")) {
+                                        btn.style.display = 'none';
+                                    }
+                                });
+                                const mobileControls = document.getElementById('mobileControlsContainer');
+                                if (mobileControls) mobileControls.style.display = 'grid';
+                            }
                         }
 
                         const rulesDiv = document.getElementById('rulesContainer');
@@ -362,9 +442,13 @@
                         const gameCanvas = document.getElementById('game');
                         if (gameCanvas) gameCanvas.style.display = 'none';
                         const buttonsDiv = document.querySelector('.buttons');
-                        if (buttonsDiv) buttonsDiv.style.display = 'none';
+                        // if (buttonsDiv) buttonsDiv.style.display = 'none'; // controlBtn itself is in this div, so don't hide the whole div.
                         const rulesDiv = document.getElementById('rulesContainer');
                         if (rulesDiv) rulesDiv.style.display = 'none';
+
+                        // Hide mobile controls on game restart/end
+                        const mobileControls = document.getElementById('mobileControlsContainer');
+                        if (mobileControls) mobileControls.style.display = 'none';
 
                         // initGame(); // from game.js - NO, initGame is called when Start is pressed again after mode selection
                         // Instead, we need to reset gameStarted, gameOver flags and update button text
