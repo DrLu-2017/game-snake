@@ -13,6 +13,7 @@ const maxFoodPerRound = 10;
 let gameOver = false; // Shared game over state
 let isPaused = false;
 let gameStarted = false;
+let isPlayer2Active = false; // Added this flag
 let gameSpeed = 200; // Shared game speed
 let gameIntervalId;
 
@@ -81,40 +82,59 @@ function updateGameStatusDisplay() {
         p1GameOverEl.style.display = p1_gameOver ? 'block' : 'none';
     }
 
-    // Player 2
-    const p2TargetLengthEl = document.getElementById('p2TargetLengthDisplay');
-    if (!p2TargetLengthEl) {
-        console.error("[DEBUG_STARTUP] updateGameStatusDisplay: Element 'p2TargetLengthDisplay' NOT FOUND!");
-    } else {
-        p2TargetLengthEl.textContent = 'Target Length: ' + p2_targetLength;
-    }
+    // Player 2 Status Area
+    const p2StatusContainer = document.getElementById('p2StatusContainer');
+    if (p2StatusContainer) {
+        if (typeof isPlayer2Active !== 'undefined' && !isPlayer2Active) {
+            p2StatusContainer.style.display = 'none';
+        } else {
+            // Assuming 'block' is the correct display type for the container when visible.
+            // If it was 'flex' or something else, that should be used.
+            // The initial HTML sets it to display:none; JS in index.html makes it block.
+            p2StatusContainer.style.display = 'block';
 
-    const p2RoundsEl = document.getElementById('p2RoundsDisplay');
-    if (!p2RoundsEl) {
-        console.error("[DEBUG_STARTUP] updateGameStatusDisplay: Element 'p2RoundsDisplay' NOT FOUND!");
-    } else {
-        p2RoundsEl.textContent = 'Rounds Cleared: ' + p2_roundsAchieved + ' / ' + maxRoundsPerGame;
-    }
+            // Update P2 elements only if P2 is active
+            const p2TargetLengthEl = document.getElementById('p2TargetLengthDisplay');
+            if (!p2TargetLengthEl) {
+                console.error("[DEBUG_STARTUP] updateGameStatusDisplay: Element 'p2TargetLengthDisplay' NOT FOUND!");
+            } else {
+                p2TargetLengthEl.textContent = 'Target Length: ' + p2_targetLength;
+            }
 
-    const p2FoodThisRoundEl = document.getElementById('p2FoodThisRoundDisplay');
-    if (!p2FoodThisRoundEl) {
-        console.error("[DEBUG_STARTUP] updateGameStatusDisplay: Element 'p2FoodThisRoundDisplay' NOT FOUND!");
-    } else {
-        p2FoodThisRoundEl.textContent = 'Food This Round: ' + p2_foodEatenThisRound + ' / ' + maxFoodPerRound;
-    }
+            const p2RoundsEl = document.getElementById('p2RoundsDisplay');
+            if (!p2RoundsEl) {
+                console.error("[DEBUG_STARTUP] updateGameStatusDisplay: Element 'p2RoundsDisplay' NOT FOUND!");
+            } else {
+                p2RoundsEl.textContent = 'Rounds Cleared: ' + p2_roundsAchieved + ' / ' + maxRoundsPerGame;
+            }
 
-    const p2CurrentLengthEl = document.getElementById('p2CurrentLengthDisplay');
-    if (!p2CurrentLengthEl) {
-        console.error("[DEBUG_STARTUP] updateGameStatusDisplay: Element 'p2CurrentLengthDisplay' NOT FOUND!");
-    } else {
-        p2CurrentLengthEl.textContent = 'Current Length: ' + (typeof snake2Body !== 'undefined' && snake2Body ? snake2Body.length : 0);
-    }
+            const p2FoodThisRoundEl = document.getElementById('p2FoodThisRoundDisplay');
+            if (!p2FoodThisRoundEl) {
+                console.error("[DEBUG_STARTUP] updateGameStatusDisplay: Element 'p2FoodThisRoundDisplay' NOT FOUND!");
+            } else {
+                p2FoodThisRoundEl.textContent = 'Food This Round: ' + p2_foodEatenThisRound + ' / ' + maxFoodPerRound;
+            }
 
-    const p2GameOverEl = document.getElementById('p2GameOverDisplay');
-    if (!p2GameOverEl) {
-        console.error("[DEBUG_STARTUP] updateGameStatusDisplay: Element 'p2GameOverDisplay' NOT FOUND!");
+            const p2CurrentLengthEl = document.getElementById('p2CurrentLengthDisplay');
+            if (!p2CurrentLengthEl) {
+                console.error("[DEBUG_STARTUP] updateGameStatusDisplay: Element 'p2CurrentLengthDisplay' NOT FOUND!");
+            } else {
+                p2CurrentLengthEl.textContent = 'Current Length: ' + (typeof snake2Body !== 'undefined' && snake2Body ? snake2Body.length : 0);
+            }
+
+            const p2GameOverEl = document.getElementById('p2GameOverDisplay');
+            if (!p2GameOverEl) {
+                console.error("[DEBUG_STARTUP] updateGameStatusDisplay: Element 'p2GameOverDisplay' NOT FOUND!");
+            } else {
+                // p2_gameOver will be true if !isPlayer2Active due to initGame logic,
+                // so this naturally hides the "GAME OVER" text for P2 in 1P mode if container was visible.
+                // However, since the container itself is hidden, this specific p2GameOverEl.style.display
+                // might be redundant for 1P mode but correct for 2P mode when P2 has a game over.
+                p2GameOverEl.style.display = p2_gameOver ? 'block' : 'none';
+            }
+        }
     } else {
-        p2GameOverEl.style.display = p2_gameOver ? 'block' : 'none';
+        console.error("[DEBUG_STARTUP] updateGameStatusDisplay: Element 'p2StatusContainer' NOT FOUND!");
     }
     console.log("[DEBUG_STARTUP] updateGameStatusDisplay: End");
 }
@@ -129,15 +149,36 @@ function initGame() {
     isPaused = false;
     gameOver = false; // Overall game over
 
+    // Player 1 setup (common to both modes)
     p1_gameOver = false;
     p1_roundsAchieved = 0;
-    // p1_targetLength will be set by startNewRoundForPlayer
-    // p1_foodEatenThisRound will be set by startNewRoundForPlayer
+    // p1_targetLength and p1_foodEatenThisRound are set by startNewRoundForPlayer(1)
+    console.log("[DEBUG_STARTUP] initGame: Calling resetSnake1");
+    resetSnake1();
+    console.log("[DEBUG_STARTUP] initGame: Calling startNewRoundForPlayer(1)");
+    startNewRoundForPlayer(1); // Sets up P1's first round
 
-    p2_gameOver = false;
-    p2_roundsAchieved = 0;
-    // p2_targetLength will be set by startNewRoundForPlayer
-    // p2_foodEatenThisRound will be set by startNewRoundForPlayer
+    // Conditional Player 2 setup
+    // selectedGameMode is global, accessible from index.html's script
+    if (typeof selectedGameMode !== 'undefined' && selectedGameMode === '2P') {
+        isPlayer2Active = true;
+        p2_gameOver = false; // Ensure P2 is active
+        p2_roundsAchieved = 0;
+        // p2_targetLength and p2_foodEatenThisRound are set by startNewRoundForPlayer(2)
+        console.log("[DEBUG_STARTUP] initGame: Calling resetSnake2 for 2P mode");
+        resetSnake2();
+        console.log("[DEBUG_STARTUP] initGame: Calling startNewRoundForPlayer(2) for 2P mode");
+        startNewRoundForPlayer(2); // Sets up P2's first round
+        console.log("[GAME SETUP] Two-player mode selected and initialized.");
+    } else { // Default to One-Player mode or if selectedGameMode is '1P'
+        isPlayer2Active = false;
+        p2_gameOver = true; // Explicitly set P2 as game over to disable logic
+        if (typeof snake2Body !== 'undefined') snake2Body = []; // Ensure P2 snake is empty
+        p2_roundsAchieved = 0; // Reset stats
+        p2_foodEatenThisRound = 0;
+        p2_targetLength = 0;
+        console.log("[GAME SETUP] One-player mode selected and initialized. P2 disabled.");
+    }
 
     score = 0;
 
@@ -147,17 +188,7 @@ function initGame() {
     }
     gameSpeed = 200;
 
-    console.log("[DEBUG_STARTUP] initGame: Calling resetSnake1");
-    resetSnake1();
-    console.log("[DEBUG_STARTUP] initGame: Calling resetSnake2");
-    resetSnake2();
-
-    console.log("[DEBUG_STARTUP] initGame: Calling startNewRoundForPlayer(1)");
-    startNewRoundForPlayer(1); // Start P1's first round
-    console.log("[DEBUG_STARTUP] initGame: Calling startNewRoundForPlayer(2)");
-    startNewRoundForPlayer(2); // Start P2's first round
-
-    // generateNewFood(); // Called by startNewRound functions
+    // generateNewFood(); // This is now called by startNewRoundForPlayer
 
     if (gameIntervalId) {
         clearInterval(gameIntervalId);
@@ -323,7 +354,7 @@ function updateGame() {
     }
 
     // --- Player 2 Logic ---
-    if (gameStarted && !isPaused && !p2_gameOver) {
+    if (isPlayer2Active && gameStarted && !isPaused && !p2_gameOver) { // Added isPlayer2Active check
         const head2 = moveSnake2();
         if (head2) {
             if (checkWallCollision(head2, getSnakeWidthP2()) || checkSelfCollision(head2, snake2Body)) {
@@ -404,11 +435,11 @@ function updateGame() {
         // The main `foodEatenThisTick` flag is for the `generateNewFood()` call.
     } else { // NO food was eaten by ANY player this tick
         if (!p1_gameOver && snake1Body.length > 1) snake1Body.pop();
-        if (!p2_gameOver && snake2Body.length > 1) snake2Body.pop();
+        if (isPlayer2Active && !p2_gameOver && snake2Body.length > 1) snake2Body.pop(); // Added isPlayer2Active
     }
 
     // Snake vs Snake collision logic
-    if (gameStarted && !isPaused && !p1_gameOver && !p2_gameOver && snake1Body.length > 0 && snake2Body.length > 0) {
+    if (isPlayer2Active && gameStarted && !isPaused && !p1_gameOver && !p2_gameOver && snake1Body.length > 0 && snake2Body.length > 0) {
         let p1HitP2 = false;
         let p2HitP1 = false;
 

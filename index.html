@@ -21,10 +21,17 @@
 </head>
 <body>
   <h1>贪吃蛇游戏</h1>
+
+  <div id="playerModeSelection" style="margin-bottom: 20px; text-align: center;">
+      <h2>Select Game Mode:</h2>
+      <label style="margin-right: 15px;"><input type="radio" name="playerMode" value="1P" checked> One Player</label>
+      <label><input type="radio" name="playerMode" value="2P"> Two Players</label>
+  </div>
+
   <div id="currentTimeDisplay"></div>
 
   <!-- Player 1 Status -->
-  <div id="p1StatusContainer" style="margin-top: 10px; padding: 5px; border: 1px solid #444; color: #ccc; font-size: 14px; width: 200px; text-align: center; margin-right: 5px;">
+  <div id="p1StatusContainer" style="margin-top: 10px; padding: 5px; border: 1px solid #444; color: #ccc; font-size: 14px; width: 200px; text-align: center; margin-right: 5px; display:none;">
       <h4>Player 1 (Green)</h4>
       <div id="p1CurrentLengthDisplay">Current Length: 0</div>
       <div id="p1TargetLengthDisplay" style="margin-bottom: 3px;">Target Length: 0</div>
@@ -34,7 +41,7 @@
   </div>
 
   <!-- Player 2 Status -->
-  <div id="p2StatusContainer" style="margin-top: 10px; padding: 5px; border: 1px solid #444; color: #ccc; font-size: 14px; width: 200px; text-align: center; margin-left: 5px;">
+  <div id="p2StatusContainer" style="margin-top: 10px; padding: 5px; border: 1px solid #444; color: #ccc; font-size: 14px; width: 200px; text-align: center; margin-left: 5px; display:none;">
       <h4>Player 2 (Blue)</h4>
       <div id="p2CurrentLengthDisplay">Current Length: 0</div>
       <div id="p2TargetLengthDisplay" style="margin-bottom: 3px;">Target Length: 0</div>
@@ -51,8 +58,8 @@
       <div id="foodThisRoundDisplay">Food This Round: 0 / 10</div>
   </div> -->
 
-  <canvas id="game" width="400" height="400"></canvas>
-  <div class="buttons">
+  <canvas id="game" width="400" height="400" style="display:none;"></canvas>
+  <div class="buttons" style="display:none;">
     <button id="toggleRulesBtn" class="btn">Show Rules</button> <!-- Added Rules Button -->
     <button class="btn" onclick="setDirection('up')">↑</button>
     <button class="btn" onclick="setDirection('left')">←</button>
@@ -66,7 +73,7 @@
   </div>
 
   <!-- Rules Container -->
-  <div id="rulesContainer" style="display: block; margin-top: 15px; padding: 10px; border: 1px solid #555; border-radius: 5px; max-width: 500px; text-align: left; background-color: #222;">
+  <div id="rulesContainer" style="display: none; margin-top: 15px; padding: 10px; border: 1px solid #555; border-radius: 5px; max-width: 500px; text-align: left; background-color: #222;">
       <!-- Content will be populated by JavaScript -->
   </div>
 
@@ -138,6 +145,8 @@
     // const scoreDisplay = document.getElementById("scoreDisplay"); // Replaced by p1CurrentLengthDisplay etc.
     const toggleRulesBtn = document.getElementById('toggleRulesBtn');
     const rulesContainer = document.getElementById('rulesContainer');
+
+    let selectedGameMode = '1P'; // Default to '1P' as it's checked in HTML
 
     function updateControlBtnText() {
         // Assumes controlBtn, gameStarted, gameOver, isPaused are accessible (gameOver is master)
@@ -278,11 +287,69 @@
             controlBtn.addEventListener('click', function() {
                 try { // Inner try-catch for the callback logic
                     if (!gameStarted) {
-                        initGame(); // from game.js
+                        // Get selected player mode
+                        const selectedModeInput = document.querySelector('input[name="playerMode"]:checked');
+                        if (selectedModeInput) {
+                            selectedGameMode = selectedModeInput.value;
+                        }
+                        console.log("Selected game mode:", selectedGameMode);
+
+                        // Hide player mode selection UI
+                        const playerModeSelectionUI = document.getElementById('playerModeSelection');
+                        if (playerModeSelectionUI) {
+                            playerModeSelectionUI.style.display = 'none';
+                        }
+
+                        // Show main game UI elements
+                        const p1Status = document.getElementById('p1StatusContainer');
+                        if (p1Status) p1Status.style.display = 'block';
+
+                        // P2 container visibility will be handled by initGame based on selectedGameMode,
+                        // but we can make it 'block' here initially, and initGame can hide it if 1P.
+                        const p2Status = document.getElementById('p2StatusContainer');
+                        if (p2Status) p2Status.style.display = 'block';
+
+                        const gameCanvas = document.getElementById('game');
+                        if (gameCanvas) gameCanvas.style.display = 'block';
+
+                        const buttonsDiv = document.querySelector('.buttons');
+                        if (buttonsDiv) buttonsDiv.style.display = 'flex'; // Assuming flex is desired
+
+                        const rulesDiv = document.getElementById('rulesContainer');
+                        if (rulesDiv) rulesDiv.style.display = 'block'; // Or 'none' if toggle button should control from start
+
+                        initGame(); // from game.js - this will also handle P2 UI based on selectedGameMode
                         if (difficultyButtons) difficultyButtons.forEach(btn => btn.style.display = 'inline-block'); // Show difficulty buttons
                     } else if (gameOver) {
-                        initGame(); // from game.js
-                        if (difficultyButtons) difficultyButtons.forEach(btn => btn.style.display = 'inline-block'); // Show difficulty buttons
+                        // On restart, player mode selection should reappear.
+                        const playerModeSelectionUI = document.getElementById('playerModeSelection');
+                        if (playerModeSelectionUI) {
+                            playerModeSelectionUI.style.display = 'block'; // Show mode selection
+                        }
+                        // Hide game elements again until mode is re-selected and game started
+                        const p1Status = document.getElementById('p1StatusContainer');
+                        if (p1Status) p1Status.style.display = 'none';
+                        const p2Status = document.getElementById('p2StatusContainer');
+                        if (p2Status) p2Status.style.display = 'none';
+                        const gameCanvas = document.getElementById('game');
+                        if (gameCanvas) gameCanvas.style.display = 'none';
+                        const buttonsDiv = document.querySelector('.buttons');
+                        if (buttonsDiv) buttonsDiv.style.display = 'none';
+                        const rulesDiv = document.getElementById('rulesContainer');
+                        if (rulesDiv) rulesDiv.style.display = 'none';
+
+                        // initGame(); // from game.js - NO, initGame is called when Start is pressed again after mode selection
+                        // Instead, we need to reset gameStarted, gameOver flags and update button text
+                        gameStarted = false;
+                        gameOver = false; // Reset master game over
+                        p1_gameOver = false; // Reset player-specific game over
+                        p2_gameOver = false; // Reset player-specific game over
+                        updateControlBtnText(); // Should now say "Start Game"
+                        drawGame(); // Show the "Press Start Game" message
+                        // Difficulty buttons should be hidden again.
+                        if (difficultyButtons) difficultyButtons.forEach(btn => btn.style.display = 'none');
+
+                    // The redundant "else if (gameOver)" block that was here has been removed.
                     } else {
                         togglePauseGame(); // from game.js
                     }
@@ -312,11 +379,11 @@
                     else if (e.key === "ArrowLeft") { changeDirectionP1('left'); }
                     else if (e.key === "ArrowRight") { changeDirectionP1('right'); }
 
-                    // Player 2 Controls (WASD)
-                    else if (e.key.toLowerCase() === 'w' && !p2_gameOver) { changeDirectionP2('up'); }
-                    else if (e.key.toLowerCase() === 's' && !p2_gameOver) { changeDirectionP2('down'); }
-                    else if (e.key.toLowerCase() === 'a' && !p2_gameOver) { changeDirectionP2('left'); }
-                    else if (e.key.toLowerCase() === 'd' && !p2_gameOver) { changeDirectionP2('right'); }
+                    // Player 2 Controls (WASD) - Conditional on isPlayer2Active
+                    else if (typeof isPlayer2Active !== 'undefined' && isPlayer2Active && e.key.toLowerCase() === 'w' && !p2_gameOver) { changeDirectionP2('up'); }
+                    else if (typeof isPlayer2Active !== 'undefined' && isPlayer2Active && e.key.toLowerCase() === 's' && !p2_gameOver) { changeDirectionP2('down'); }
+                    else if (typeof isPlayer2Active !== 'undefined' && isPlayer2Active && e.key.toLowerCase() === 'a' && !p2_gameOver) { changeDirectionP2('left'); }
+                    else if (typeof isPlayer2Active !== 'undefined' && isPlayer2Active && e.key.toLowerCase() === 'd' && !p2_gameOver) { changeDirectionP2('right'); }
                 }
             } catch (er) { // Changed 'e' to 'er' to avoid conflict with event 'e'
                 console.error("Error in keydown event callback:", er);
