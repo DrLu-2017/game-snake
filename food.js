@@ -44,16 +44,29 @@ function generateNewFood() {
             newY = Math.floor(Math.random() * rows);
             validPosition = true;
 
-            // Check against snake body
-            if (typeof snake !== 'undefined' && Array.isArray(snake)) {
-                for (const segment of snake) {
+            // Check against snake1Body
+            // Assuming snake1Body is globally accessible from snake.js
+            if (typeof snake1Body !== 'undefined' && Array.isArray(snake1Body)) {
+                for (const segment of snake1Body) {
                     if (segment.x === newX && segment.y === newY) {
                         validPosition = false;
                         break;
                     }
                 }
             }
-            if (!validPosition) { retries++; continue; }
+            if (!validPosition) { retries++; continue; } // Try new position if on snake1
+
+            // Check against snake2Body
+            // Assuming snake2Body is globally accessible from snake.js
+            if (typeof snake2Body !== 'undefined' && Array.isArray(snake2Body) && snake2Body.length > 0) {
+                for (const segment of snake2Body) {
+                    if (segment.x === newX && segment.y === newY) {
+                        validPosition = false;
+                        break;
+                    }
+                }
+            }
+            if (!validPosition) { retries++; continue; } // Try new position if on snake2
 
             // Check against other food items already generated in this batch
             for (const existingFood of activeFoods) {

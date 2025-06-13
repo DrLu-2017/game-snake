@@ -54,8 +54,21 @@ function resetSnake2() {
   console.log("[DEBUG_STARTUP] resetSnake2: Start. cols = " + (typeof cols !== 'undefined' ? cols : "undef") + ", rows = " + (typeof rows !== 'undefined' ? rows : "undef"));
   console.log("[DEBUG_STARTUP] resetSnake2: Initial snake2Body (first 2 segments): ", snake2Body ? JSON.stringify(snake2Body.slice(0,2)) : "undefined");
 
-  const startX = (typeof cols !== 'undefined' && cols > 15) ? cols - 10 : 15;
-  const startY = (typeof rows !== 'undefined' && rows > 15) ? rows - 10 : 15;
+  let startX = (typeof cols !== 'undefined' && cols > 15) ? cols - 10 : 15;
+  let startY = (typeof rows !== 'undefined' && rows > 15) ? rows - 10 : 15;
+
+  // Validate startX and startY
+  if (typeof startX !== 'number' || isNaN(startX) || typeof startY !== 'number' || isNaN(startY)) {
+    console.error(`[ERROR][snake.js] resetSnake2: Invalid initial coordinates. startX: ${startX}, startY: ${startY}. Defaulting P2 start.`);
+    // Fallback coordinates, ensuring they are different from P1's typical start (10,10)
+    // and also different from the typical default if cols/rows were valid (e.g., 15,15 or (cols-10), (rows-10))
+    // Using 20,20 as a distinct fallback.
+    startX = 20;
+    startY = 20;
+    // Ensure these defaults are within typical grid boundaries if possible, though the issue is cols/rows being undefined.
+    // If cols/rows are undefined, any coordinate is a gamble. This just prevents NaN.
+  }
+
   snake2Body = [{ x: startX, y: startY }];
   dx2 = -1; dy2 = 0; // P2 initial direction (left)
 

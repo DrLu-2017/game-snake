@@ -81,11 +81,31 @@
     // This script block should be placed after the canvas element, or within DOMContentLoaded.
     // For simplicity, assuming this entire script block (including this part) is at the end of <body>.
     const canvas = document.getElementById("game");
-    const ctx = canvas.getContext("2d");
-    const box = 10; // New cell size
-    const rows = canvas.height / box; // Number of rows (Y dimension)
-    const cols = canvas.width / box;  // Number of columns (X dimension)
-    console.log("[DEBUG_STARTUP] index.html: Initial globals defined. Box: " + box + ", Rows: " + rows + ", Cols: " + cols);
+    let ctx, box, rows, cols; // Declare here, assign after checks
+
+    if (!canvas) {
+        console.error("[CRITICAL_ERROR] index.html: Canvas element with ID 'game' not found!");
+        // Potentially halt further script execution or display a user-friendly error
+    } else {
+        ctx = canvas.getContext("2d");
+        box = 10; // New cell size
+
+        console.log("[DEBUG_STARTUP] index.html: canvas.width =", canvas.width, "canvas.height =", canvas.height);
+
+        if (typeof canvas.width !== 'number' || canvas.width <= 0 ||
+            typeof canvas.height !== 'number' || canvas.height <= 0 ||
+            isNaN(canvas.width) || isNaN(canvas.height)) {
+            console.error("[ERROR] index.html: Invalid canvas dimensions. Width or height is not a positive number.");
+            // Default values for robustness, though HTML should prevent this.
+            rows = 40;
+            cols = 40;
+            console.warn("[WARNING] index.html: Using default rows/cols (40x40) due to invalid canvas dimensions.");
+        } else {
+            rows = canvas.height / box; // Number of rows (Y dimension)
+            cols = canvas.width / box;  // Number of columns (X dimension)
+        }
+        console.log("[DEBUG_STARTUP] index.html: Initial globals defined. Box: " + box + ", Rows: " + rows + ", Cols: " + cols);
+    }
   </script>
 
   <!-- External game logic scripts -->
