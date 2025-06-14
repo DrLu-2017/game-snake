@@ -9,7 +9,7 @@
     .buttons { margin-top: 10px; display: flex; flex-wrap: wrap; justify-content: center; }
     .btn { padding: 10px 20px; margin: 5px; background: #333; color: #fff; border: none; font-size: 18px; border-radius: 8px; }
     #currentTimeDisplay { margin-top: 10px; font-size: 16px; }
-    #scoreDisplay { margin-top: 5px; font-size: 20px; color: #fff; }
+    #scoreDisplay { margin-top: 5px; font-size: 20px; color: #fff; } /* This ID might be unused, but keeping original styles */
     #rulesContainer { margin-top: 15px; padding: 10px; border: 1px solid #555; border-radius: 5px; max-width: 500px; text-align: left; background-color: #222; }
     #rulesContainer h2 { margin-top: 0; color: #fff; text-align: center;}
     #rulesContainer h3 { margin-top: 15px; margin-bottom: 5px; color: #eee; }
@@ -17,6 +17,39 @@
     #rulesContainer li { margin-bottom: 8px; line-height: 1.4; }
     #rulesContainer strong { color: #fff; }
     #rulesContainer p { margin-bottom: 10px; line-height: 1.4;}
+
+    /* Styles for Mobile Controls - Added/Modified for size increase */
+    #mobileControlsContainer {
+      /* display: none; /* This is set in HTML and by JS, display:grid is set by JS when shown */
+      width: 215px;  /* Adjusted: 65px * 3 buttons + 10px * 2 gaps */
+      height: 215px; /* Adjusted: 65px * 3 buttons + 10px * 2 gaps */
+      display: grid; /* This defines the layout when it becomes visible. Initial hiding is by inline style or JS. */
+      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-rows: 1fr 1fr 1fr;
+      gap: 10px; /* Increased gap for larger buttons */
+      margin-top: 15px; /* Adjust margin as needed */
+    }
+    .mbtn { /* Mobile button styling */
+      padding: 0; /* Remove padding if using fixed width/height for centering text */
+      font-size: 32px; /* Larger arrow text */
+      width: 65px;   /* Significantly larger width */
+      height: 65px;  /* Significantly larger height */
+      line-height: 65px; /* Vertically center text if padding is 0 (for single line text) */
+      text-align: center; /* Horizontally center text */
+      background: #444;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 10px; /* Slightly larger radius */
+      cursor: pointer;
+      box-sizing: border-box; /* Good practice */
+    }
+    .mbtn:hover {
+      background: #555; /* Basic hover effect */
+    }
+    #mobileBtnUp { grid-column: 2; grid-row: 1; }
+    #mobileBtnLeft { grid-column: 1; grid-row: 2; }
+    #mobileBtnRight { grid-column: 3; grid-row: 2; }
+    #mobileBtnDown { grid-column: 2; grid-row: 3; }
   </style>
 </head>
 <body>
@@ -131,16 +164,17 @@
   <script>
     document.addEventListener('DOMContentLoaded', function() {
         // This will run after the document is fully loaded.
-        try {
-            const mainHeading = document.querySelector('h1');
-            if (mainHeading) {
-                mainHeading.textContent = 'JS IS RUNNING!';
-            } else {
-                console.error('H1 element not found for JS test.');
-            }
-        } catch (e) {
-            console.error('Error in basic JS execution test: ', e);
-        }
+        // The debug H1 text update has been removed.
+        // try {
+        //     const mainHeading = document.querySelector('h1');
+        //     if (mainHeading) {
+        //         // mainHeading.textContent = 'JS IS RUNNING!'; // This line is removed
+        //     } else {
+        //         // console.error('H1 element not found for JS test.'); // Also removing related console message
+        //     }
+        // } catch (e) {
+        //     // console.error('Error in basic JS execution test: ', e); // Also removing related console message
+        // }
     });
 
     // UI Elements & Event Listeners specific to index.html
@@ -400,23 +434,22 @@
 
                             // Show direction buttons (select by onclick attribute content - fragile but necessary without better selectors)
                             const allButtonsInContainer = buttonsDiv.querySelectorAll('button.btn');
-                            if (!isMobileDevice()) { // <<<< MODIFIED HERE
-                                allButtonsInContainer.forEach(btn => {
-                                    const onclickAttr = btn.getAttribute('onclick');
-                                    if (onclickAttr && onclickAttr.startsWith("setDirection(")) {
-                                        btn.style.display = 'inline-block';
-                                    }
-                                });
-                            } else { // On mobile, ensure desktop direction buttons remain hidden and show mobile controls
-                                allButtonsInContainer.forEach(btn => { // Ensure desktop ones are hidden
-                                    const onclickAttr = btn.getAttribute('onclick');
-                                    if (onclickAttr && onclickAttr.startsWith("setDirection(")) {
-                                        btn.style.display = 'none';
-                                    }
-                                });
+                            allButtonsInContainer.forEach(btn => {
+                                const onclickAttr = btn.getAttribute('onclick');
+                                if (onclickAttr && onclickAttr.startsWith("setDirection(")) {
+                                    // These original on-screen direction buttons should always be hidden (PC uses keyboard, mobile uses new controls)
+                                    btn.style.display = 'none';
+                                }
+                            });
+
+                            // Show mobile controls ONLY on mobile devices
+                            if (isMobileDevice()) {
                                 const mobileControls = document.getElementById('mobileControlsContainer');
                                 if (mobileControls) mobileControls.style.display = 'grid';
                             }
+                            // No need for an else here to hide mobileControls,
+                            // as DOMContentLoaded already hides it for non-mobile,
+                            // and game restart logic also hides it.
                         }
 
                         const rulesDiv = document.getElementById('rulesContainer');
