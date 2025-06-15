@@ -4,13 +4,22 @@
 // Global 'snake' array from snake.js is used by generateNewFood.
 
 const FOOD_TYPES = {
-    REGULAR:     { id: 'REGULAR',     color: '#f00', score: 1, effect: 'grow',          name: 'Regular Food' },
-    APPLE:       { id: 'APPLE',       color: '#ff0', score: 5, effect: 'score_bonus',   name: 'Golden Apple', transform: { type: 'color_change', newColor: '#00f', duration: 3000 } },
-    BANANA:      { id: 'BANANA',      color: '#f90', score: 2, effect: 'speed_boost',   name: 'Speed Banana', duration: 5000, speedMultiplier: 0.66 },
+    REGULAR:     { id: 'REGULAR',     color: '#f00', score: 1, effect: 'grow',          name: 'Regular Food', imageSrc: 'img/appel.png' },
+    APPLE:       { id: 'APPLE',       color: '#ff0', score: 5, effect: 'score_bonus',   name: 'Golden Apple', transform: { type: 'color_change', newColor: '#00f', duration: 3000 }, imageSrc: 'img/orange.png' },
+    BANANA:      { id: 'BANANA',      color: '#f90', score: 2, effect: 'speed_boost',   name: 'Speed Banana', duration: 5000, speedMultiplier: 0.66, imageSrc: 'img/citron.png' },
     RED_BLOCK:   { id: 'RED_BLOCK',   color: '#c00', score: 2, effect: 'double_length', name: 'Grow Block' },
     GREEN_BLOCK: { id: 'GREEN_BLOCK', color: '#0c0', score: 2, effect: 'halve_length',  name: 'Shrink Block' },
     OBSTACLE:    { id: 'OBSTACLE',    color: '#777', score: 0, effect: 'game_over',     name: 'Obstacle' }
 };
+
+// Preload images for food types
+Object.values(FOOD_TYPES).forEach(foodType => {
+    if (foodType.imageSrc) {
+        const img = new Image();
+        img.src = foodType.imageSrc;
+        foodType.img = img; // Store the preloaded image object back into the foodType
+    }
+});
 
 let activeFoods = []; // Array to hold multiple food items
 const maxOnScreenFoods = 5; // New value: Maximum number of food items on screen
@@ -93,8 +102,12 @@ function drawFood() {
     if (ctx && box && activeFoods) {
         activeFoods.forEach(foodItem => {
             if (foodItem && foodItem.type) {
-                ctx.fillStyle = foodItem.type.color;
-                ctx.fillRect(foodItem.x * box, foodItem.y * box, box - 2, box - 2);
+                if (foodItem.type.img && foodItem.type.img.complete) {
+                    ctx.drawImage(foodItem.type.img, foodItem.x * box, foodItem.y * box, box, box);
+                } else {
+                    ctx.fillStyle = foodItem.type.color;
+                    ctx.fillRect(foodItem.x * box, foodItem.y * box, box - 2, box - 2);
+                }
             }
         });
     }
