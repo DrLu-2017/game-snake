@@ -12,6 +12,8 @@ let currentSnake1Color = defaultSnake1Color;
 let transformation1TimeoutId = null;
 let snake1Width = 1;
 let consecutiveRedBlocksEaten1 = 0;
+let p1MousseTurnsActive = 0;
+let p1OriginalWidthBeforeMousse = 1;
 
 // --- Player 2 State ---
 let snake2Body = []; // Will be initialized in resetSnake2
@@ -22,6 +24,8 @@ let currentSnake2Color = defaultSnake2Color;
 let transformation2TimeoutId = null;
 let snake2Width = 1;
 let consecutiveRedBlocksEaten2 = 0;
+let p2MousseTurnsActive = 0;
+let p2OriginalWidthBeforeMousse = 1;
 
 const maxSnakeWidth = 4; // Shared max width, can be player-specific if needed
 
@@ -40,8 +44,10 @@ function resetSnake1() {
     transformation1TimeoutId = null;
   }
   currentSnake1Color = defaultSnake1Color;
-  snake1Width = 1;
+  snake1Width = 1; // Explicitly reset width
   consecutiveRedBlocksEaten1 = 0;
+  p1MousseTurnsActive = 0; // Reset Mousse effect turns
+  // p1OriginalWidthBeforeMousse is not reset here, it's set when Mousse is eaten.
   // The existing log is fine, or can be merged/removed if too verbose with new ones.
   // console.log("[DEBUG][snake.js] resetSnake1: snake1Width reset to " + snake1Width + ", consecutiveRedBlocksEaten1 reset to " + consecutiveRedBlocksEaten1);
   console.log("[DEBUG_STARTUP] resetSnake1: End. Final snake1Body (first 2 segments): ", JSON.stringify(snake1Body.slice(0,2)));
@@ -77,8 +83,10 @@ function resetSnake2() {
     transformation2TimeoutId = null;
   }
   currentSnake2Color = defaultSnake2Color;
-  snake2Width = 1;
+  snake2Width = 1; // Explicitly reset width
   consecutiveRedBlocksEaten2 = 0;
+  p2MousseTurnsActive = 0; // Reset Mousse effect turns
+  // p2OriginalWidthBeforeMousse is not reset here.
   // console.log("[DEBUG][snake.js] resetSnake2: snake2Width reset to " + snake2Width + ", consecutiveRedBlocksEaten2 reset to " + consecutiveRedBlocksEaten2);
   console.log("[DEBUG_STARTUP] resetSnake2: End. Final snake2Body (first 2 segments): ", JSON.stringify(snake2Body.slice(0,2)));
 }
@@ -87,31 +95,43 @@ function resetSnake2() {
  * Helper function to draw a single snake.
  */
 function drawSingleSnake(snakeBody, color, width) {
-    console.log("[DEBUG_STARTUP] drawSingleSnake: Drawing snake with length " + (typeof snakeBody !== 'undefined' && snakeBody ? snakeBody.length : 'undefined_or_empty') + ", color: " + color + ", width: " + width);
+    console.log(`[DRAW_DEBUG] drawSingleSnake: Entered for snake. Length: ${snakeBody ? snakeBody.length : 'N/A'}, Color: ${color}, Width: ${width}`);
     if (!snakeBody || snakeBody.length === 0) {
-        console.log("[DEBUG_STARTUP] drawSingleSnake: snakeBody is undefined, null, or empty. Skipping draw for this snake.");
         return;
     }
-    if (ctx && box) { // Removed snakeBody from here as it's checked above
-        snakeBody.forEach(segment => {
-            ctx.fillStyle = color;
-            const segmentSize = box * width;
-            const offset = (segmentSize - box) / 2;
-            const visualSize = segmentSize - 2; // Keep a small border
-            ctx.fillRect(segment.x * box - offset, segment.y * box - offset, visualSize, visualSize);
+    if (ctx && box) {
+        snakeBody.forEach((segment, index) => {
+            // console.log(`[DRAW_DEBUG] drawSingleSnake: Drawing segment ${index} at ${segment.x * box}, ${segment.y * box}`); // This can be very verbose, enable if needed
+            try {
+                ctx.fillStyle = color;
+                const segmentSize = box * width;
+                const offset = (segmentSize - box) / 2;
+                const visualSize = segmentSize - 2;
+                ctx.fillRect(segment.x * box - offset, segment.y * box - offset, visualSize, visualSize);
+            } catch (e) {
+                console.error(`[DRAW_DEBUG] drawSingleSnake: Error drawing segment ${index} for color ${color}:`, e);
+            }
         });
+    } else {
+        console.warn(`[DRAW_DEBUG] drawSingleSnake: ctx or box is undefined/null for color ${color}.`);
     }
+    console.log(`[DRAW_DEBUG] drawSingleSnake: Exiting for snake. Color: ${color}`);
 }
 
 /**
  * Draws both snakes on the canvas.
  */
 function drawSnakes() {
-  // console.log("[DEBUG][snake.js] drawSnakes: P1 width = " + snake1Width + ", P2 width = " + snake2Width); // This is the old log
-  console.log("[DEBUG_STARTUP] drawSnakes: Start. snake1Body length: " + (typeof snake1Body !== 'undefined' && snake1Body ? snake1Body.length : 'undefined_or_empty') + ", snake2Body length: " + (typeof snake2Body !== 'undefined' && snake2Body ? snake2Body.length : 'undefined_or_empty'));
-  drawSingleSnake(snake1Body, currentSnake1Color, snake1Width);
-  // No need to check snake2Body.length here, drawSingleSnake does it.
-  drawSingleSnake(snake2Body, currentSnake2Color, snake2Width);
+  console.log("[DRAW_DEBUG] drawSnakes: Entered.");
+  // The existing log about snake lengths is good.
+  // console.log("[DEBUG_STARTUP] drawSnakes: Start. snake1Body length: ... , snake2Body length: ..."); // This was the original log, can be kept or removed if too noisy with new logs
+  try {
+      drawSingleSnake(snake1Body, currentSnake1Color, snake1Width);
+      drawSingleSnake(snake2Body, currentSnake2Color, snake2Width);
+  } catch (e) {
+      console.error("[DRAW_DEBUG] drawSnakes: Error calling drawSingleSnake:", e);
+  }
+  console.log("[DRAW_DEBUG] drawSnakes: Exiting.");
 }
 
 
@@ -277,6 +297,15 @@ function getSnakeWidthP2() { return snake2Width; }
 // `incrementSnakeWidth` is now `incrementSnakeWidthP1`.
 // `getSnakeWidth` is now `getSnakeWidthP1`.
 // `applyTransformation` is now `applyTransformationP1`.
+
+function setSnakeWidthP1(newWidth) {
+    snake1Width = Math.max(1, Math.min(newWidth, maxSnakeWidth));
+    console.log("[DEBUG][snake.js] setSnakeWidthP1: new snake1Width = " + snake1Width);
+}
+function setSnakeWidthP2(newWidth) {
+    snake2Width = Math.max(1, Math.min(newWidth, maxSnakeWidth));
+    console.log("[DEBUG][snake.js] setSnakeWidthP2: new snake2Width = " + snake2Width);
+}
 // `moveSnake` is now `moveSnake1`.
 // `changeDirection` is now `changeDirectionP1`.
 // `checkWallCollision` and `checkSelfCollision` are now parameterized.

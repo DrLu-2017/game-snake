@@ -120,6 +120,11 @@
   <!-- NOTE: "background_music.mp3" is a placeholder. Replace with a valid audio file path for music to play. -->
   <audio id="bgMusic" src="background_music.mp3" loop></audio>
 
+  <div id="consecutiveFoodWarning" style="display: none; position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); background-color: #333; color: #fff; padding: 20px; border: 1px solid red; box-shadow: 0 0 10px rgba(0,0,0,0.5); border-radius: 10px; z-index: 1000; text-align: center; width: 300px;">
+      <p id="warningTextMessage" style="margin-bottom: 15px; font-size: 16px;"></p>
+      <button id="warningAckBtn" style="padding: 10px 20px; background: #d9534f; color: #fff; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">OK</button>
+  </div>
+
   <!-- Define global canvas/grid vars BEFORE loading external scripts that might use them -->
   <script>
     // Essential global variables for canvas and game setup
@@ -135,7 +140,7 @@
         // Potentially halt further script execution or display a user-friendly error
     } else {
         ctx = canvas.getContext("2d");
-        box = 10; // New cell size
+        box = 15; // New cell size
 
         console.log("[DEBUG_STARTUP] index.html: canvas.width =", canvas.width, "canvas.height =", canvas.height);
 
@@ -211,6 +216,24 @@
     // Initialize food and draw initial game screen (start message)
     // food.js and game.js functions are now globally available.
     document.addEventListener('DOMContentLoaded', () => {
+      const warningContainer = document.getElementById('consecutiveFoodWarning');
+      const warningAckBtn = document.getElementById('warningAckBtn');
+      // const warningTextMessage = document.getElementById('warningTextMessage'); // Not strictly needed here if game.js handles text
+
+      if (warningAckBtn && warningContainer) {
+          warningAckBtn.addEventListener('click', () => {
+              if (typeof acknowledgeFoodWarning === 'function') {
+                  acknowledgeFoodWarning(); // This function will be defined in game.js
+              } else {
+                  // Fallback if function isn't found
+                  console.warn("acknowledgeFoodWarning function not found. Hiding warning via index.html.");
+                  warningContainer.style.display = 'none';
+              }
+          });
+      } else {
+          console.error("Warning container or ACK button not found in index.html.");
+      }
+
       const desktopButtonsDiv = document.querySelector('.buttons');
       const mobileControlsContainer = document.getElementById('mobileControlsContainer');
 
@@ -241,6 +264,41 @@
         drawGame(); // Call from game.js to draw the initial "Press Start Game" screen.
         updateControlBtnText(); // Set initial text for controlBtn
         updateGameStatusDisplay(); // Initialize P1/P2 status displays
+
+        // First visit logic for rules display
+        try {
+            if (localStorage.getItem('hasVisitedBefore') === null) {
+                // First visit
+                if (rulesContainer) {
+                    rulesContainer.style.display = 'block';
+                    if (toggleRulesBtn) { // Ensure toggleRulesBtn exists
+                         toggleRulesBtn.textContent = 'Hide Rules';
+                    }
+                }
+                localStorage.setItem('hasVisitedBefore', 'true');
+            } else {
+                // Subsequent visits - rules default to hidden unless shown by other logic
+                // The check rulesContainer.style.display !== 'block' ensures we don't override if rules were shown by other means
+                // (e.g. if game starts and shows rules by default - though current logic doesn't do that)
+                if (rulesContainer && rulesContainer.style.display !== 'block') { 
+                     rulesContainer.style.display = 'none'; // Default for subsequent visits
+                     if (toggleRulesBtn) {
+                          toggleRulesBtn.textContent = 'Show Rules';
+                     }
+                } else if (rulesContainer && rulesContainer.style.display === 'block'){
+                    // If it's a subsequent visit AND rules are somehow already block (e.g. user interaction before this script runs fully, unlikely)
+                    // ensure button text is correct.
+                    if (toggleRulesBtn) {
+                        toggleRulesBtn.textContent = 'Hide Rules';
+                    }
+                }
+            }
+        } catch (e) {
+            console.error("Error accessing localStorage or setting rules display: ", e);
+            // Fallback: rules remain hidden by default if localStorage fails
+            if (rulesContainer) rulesContainer.style.display = 'none';
+            if (toggleRulesBtn) toggleRulesBtn.textContent = 'Show Rules';
+        }
 
         // Populate Rules
         if (rulesContainer && typeof maxRoundsPerGame !== 'undefined' && typeof maxFoodPerRound !== 'undefined') {
@@ -305,12 +363,12 @@
 
             <h3>Food Types & Effects:</h3>
             <ul>
-                <li><strong>Regular Food:</strong> Snake grows by one segment.</li>
-                <li><strong>Apple (Yellow):</strong> Snake temporarily changes color. (Traditional score: +5).</li>
-                <li><strong>Banana (Orange):</strong> Temporary speed boost. (Traditional score: +2).</li>
-                <li><strong>Obstacle (Gray):</strong> Game Over for the player who eats it!</li>
-                <li><strong>Red Block (Dark Red):</strong> Doubles current length. Eat 2 consecutively for width increase (max width still applies). (Traditional score: +2).</li>
-                <li><strong>Green Block (Dark Green):</strong> Halves current length (if > 2 segments). (Traditional score: +2).</li>
+                <li><strong>Mousse (mousse.png):</strong> Temporarily changes game difficulty to 'hard' and doubles your snake's width for 3 turns. Score: +3.</li>
+                <li><strong>Apple (apple.png):</strong> Snake temporarily changes color and game speed is reduced (slower snake) for a short period. Score: +5.</li>
+                <li><strong>Pasteque (pasteque.png):</strong> Grants a temporary speed boost for a short period. Score: +2.</li>
+                <li><strong>Obstacle (wall.png):</strong> Game Over for the player who eats it! Score: +0.</li>
+                <li><strong>Citron (citron.png):</strong> Doubles your snake's current length. Eat 2 Citrons consecutively to increase snake width. Score: +2.</li>
+                <li><strong>Orange (orange.png):</strong> Halves your snake's current length (if length is > 2 segments). Score: +2.</li>
             </ul>
 
             <p>Have fun playing together!</p>
@@ -459,9 +517,11 @@
                         // For now, let's make it block, consistent with other elements.
                         if (rulesDiv) rulesDiv.style.display = 'block';
 
+                        document.body.style.overflow = 'hidden'; // Disable scrollbars
                         initGame(); // from game.js - this will also handle P2 UI based on selectedGameMode
                         if (difficultyButtons) difficultyButtons.forEach(btn => btn.style.display = 'inline-block'); // Show difficulty buttons
                     } else if (gameOver) {
+                        document.body.style.overflow = 'auto'; // Enable scrollbars
                         // On restart, player mode selection should reappear.
                         const playerModeSelectionUI = document.getElementById('playerModeSelection');
                         if (playerModeSelectionUI) {
@@ -495,8 +555,15 @@
                         if (difficultyButtons) difficultyButtons.forEach(btn => btn.style.display = 'none');
 
                     // The redundant "else if (gameOver)" block that was here has been removed.
-                    } else {
-                        togglePauseGame(); // from game.js
+                    } else { // This block is for pause/resume
+                        togglePauseGame(); // from game.js, this flips the isPaused state
+                        if (isPaused) {
+                            document.body.style.overflow = 'auto'; // Game is PAUSED, so ENABLE scrollbars
+                            console.log("Game paused, scrollbars enabled.");
+                        } else {
+                            document.body.style.overflow = 'hidden'; // Game is RESUMED, so DISABLE scrollbars
+                            console.log("Game resumed, scrollbars disabled.");
+                        }
                     }
                     // updateControlBtnText() is called by initGame/togglePauseGame in game.js
                 } catch (e) {
@@ -515,8 +582,17 @@
         document.addEventListener("keydown", e => {
             try { // Inner try-catch for the callback logic
                 if (e.key === " ") {
-                    togglePauseGame();
-                    e.preventDefault();
+                    e.preventDefault(); // Keep preventDefault at the start
+                    if (gameStarted && !gameOver) { // Only toggle pause if game is running and not over
+                        togglePauseGame();
+                        if (isPaused) {
+                            document.body.style.overflow = 'auto'; // Game is PAUSED, ENABLE scrollbars
+                            console.log("Game paused via spacebar, scrollbars enabled.");
+                        } else {
+                            document.body.style.overflow = 'hidden'; // Game is RESUMED, DISABLE scrollbars
+                            console.log("Game resumed via spacebar, scrollbars disabled.");
+                        }
+                    }
                 } else if (gameStarted && !isPaused) {
                     // Player 1 Controls (Arrow Keys)
                     if (e.key === "ArrowUp") { changeDirectionP1('up'); }
@@ -663,10 +739,17 @@
 
                     if (Math.abs(diffX) < tapThreshold && Math.abs(diffY) < tapThreshold) {
                         e.preventDefault();
-                        if (tapTimeDifference < doubleTapDelay && tapTimeDifference > 0) {
+                        if (tapTimeDifference < doubleTapDelay && tapTimeDifference > 0) { // Double tap
                             if (gameStarted && !gameOver) {
                                 togglePauseGame();
-                            } else {
+                                if (isPaused) {
+                                    document.body.style.overflow = 'auto'; // Game is PAUSED, ENABLE scrollbars
+                                    console.log("Game paused via double-tap, scrollbars enabled.");
+                                } else {
+                                    document.body.style.overflow = 'hidden'; // Game is RESUMED, DISABLE scrollbars
+                                    console.log("Game resumed via double-tap, scrollbars disabled.");
+                                }
+                            } else { // Game not started or is over, double tap starts/restarts
                                 const startGameButton = document.getElementById('startGameBtn'); // This ID might be legacy
                                 if(startGameButton) startGameButton.style.display = 'none';
                                 if (difficultyButtons) difficultyButtons.forEach(btn => btn.style.display = 'inline-block');

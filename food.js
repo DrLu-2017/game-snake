@@ -4,12 +4,12 @@
 // Global 'snake' array from snake.js is used by generateNewFood.
 
 const FOOD_TYPES = {
-    REGULAR:     { id: 'REGULAR',     color: '#f00', score: 1, effect: 'grow',          name: 'Regular Food', imageSrc: 'img/appel.png' },
-    APPLE:       { id: 'APPLE',       color: '#ff0', score: 5, effect: 'score_bonus',   name: 'Golden Apple', transform: { type: 'color_change', newColor: '#00f', duration: 3000 }, imageSrc: 'img/orange.png' },
-    BANANA:      { id: 'BANANA',      color: '#f90', score: 2, effect: 'speed_boost',   name: 'Speed Banana', duration: 5000, speedMultiplier: 0.66, imageSrc: 'img/citron.png' },
-    RED_BLOCK:   { id: 'RED_BLOCK',   color: '#c00', score: 2, effect: 'double_length', name: 'Grow Block' },
-    GREEN_BLOCK: { id: 'GREEN_BLOCK', color: '#0c0', score: 2, effect: 'halve_length',  name: 'Shrink Block' },
-    OBSTACLE:    { id: 'OBSTACLE',    color: '#777', score: 0, effect: 'game_over',     name: 'Obstacle' }
+    MOUSSE:      { id: 'MOUSSE',      color: '#A0522D', score: 3, effect: 'mousse_special', name: 'Mousse', imageSrc: 'img/mousse.png' }, // Placeholder
+    APPLE:       { id: 'APPLE',       color: '#ff0000', score: 5, effect: 'apple_special', name: 'Apple', imageSrc: 'img/apple.png' },   // Using existing appel.png
+    PASTEQUE:    { id: 'PASTEQUE',    color: '#32CD32', score: 2, effect: 'speed_boost',   name: 'Pasteque', imageSrc: 'img/pasteque.png' },
+    OBSTACLE:    { id: 'OBSTACLE',    color: '#777',    score: 0, effect: 'game_over',     name: 'Obstacle', imageSrc: 'img/wall.png' }, // Placeholder
+    CITRON:      { id: 'CITRON',      color: '#FFFF00', score: 2, effect: 'citron_special',name: 'Citron', imageSrc: 'img/citron.png' },
+    ORANGE:      { id: 'ORANGE',      color: '#FFA500', score: 2, effect: 'halve_length',  name: 'Orange', imageSrc: 'img/orange.png' }
 };
 
 // Preload images for food types
@@ -39,14 +39,29 @@ function generateNewFood() {
         let retries = 0;
 
         while (!validPosition && retries < maxRetriesPerFood) {
-            // Select food type
+            // Select food type based on difficulty
+            let obstacleThreshold = 0.96; // Default for easy (4% chance of obstacle)
+            // currentDifficultyLevel is expected to be a global variable from game.js
+            if (typeof currentDifficultyLevel !== 'undefined') {
+                if (currentDifficultyLevel === 'medium') {
+                    obstacleThreshold = 0.92; // Medium (8% chance of obstacle)
+                } else if (currentDifficultyLevel === 'hard') {
+                    obstacleThreshold = 0.88; // Hard (12% chance of obstacle)
+                }
+            }
+
             const rand = Math.random();
-            if (rand < 0.50) foodType = FOOD_TYPES.REGULAR;
-            else if (rand < 0.65) foodType = FOOD_TYPES.APPLE;
-            else if (rand < 0.80) foodType = FOOD_TYPES.BANANA;
-            else if (rand < 0.88) foodType = FOOD_TYPES.RED_BLOCK;
-            else if (rand < 0.96) foodType = FOOD_TYPES.GREEN_BLOCK;
-            else foodType = FOOD_TYPES.OBSTACLE;
+            if (rand >= obstacleThreshold) {
+                foodType = FOOD_TYPES.OBSTACLE;
+            } else {
+                // Adjust rand to distribute other food types in the remaining probability space
+                const adjustedRand = rand / obstacleThreshold; // Scale rand to [0, 1)
+                if (adjustedRand < 0.25) foodType = FOOD_TYPES.APPLE;       // New Apple
+                else if (adjustedRand < 0.45) foodType = FOOD_TYPES.PASTEQUE; // New Pasteque (speed boost)
+                else if (adjustedRand < 0.65) foodType = FOOD_TYPES.CITRON;   // New Citron
+                else if (adjustedRand < 0.85) foodType = FOOD_TYPES.ORANGE;   // New Orange (halve length)
+                else foodType = FOOD_TYPES.MOUSSE;                          // New Mousse
+            }
 
             // Use 'cols' for X-axis limit and 'rows' for Y-axis limit
             newX = Math.floor(Math.random() * cols);
@@ -99,18 +114,37 @@ function generateNewFood() {
  * Draws all active food items on the canvas.
  */
 function drawFood() {
+    console.log("[DRAW_DEBUG] drawFood: Entered.");
     if (ctx && box && activeFoods) {
-        activeFoods.forEach(foodItem => {
+        activeFoods.forEach((foodItem, index) => {
+            console.log(`[DRAW_DEBUG] drawFood: Processing food item ${index}, type: ${foodItem && foodItem.type ? foodItem.type.id : 'unknown'}`);
             if (foodItem && foodItem.type) {
                 if (foodItem.type.img && foodItem.type.img.complete) {
-                    ctx.drawImage(foodItem.type.img, foodItem.x * box, foodItem.y * box, box, box);
+                    console.log(`[DRAW_DEBUG] drawFood: Drawing image for ${foodItem.type.id} at ${foodItem.x * box}, ${foodItem.y * box}`);
+                    try {
+                        ctx.drawImage(foodItem.type.img, foodItem.x * box, foodItem.y * box, box, box);
+                    } catch (e) {
+                        console.error(`[DRAW_DEBUG] drawFood: Error drawing image for ${foodItem.type.id}:`, e);
+                    }
                 } else {
-                    ctx.fillStyle = foodItem.type.color;
-                    ctx.fillRect(foodItem.x * box, foodItem.y * box, box - 2, box - 2);
+                    if (foodItem.type.img && !foodItem.type.img.complete) {
+                        console.log(`[DRAW_DEBUG] drawFood: Image for ${foodItem.type.id} not complete. Using fallback color ${foodItem.type.color}.`);
+                    } else if (!foodItem.type.img) {
+                        console.log(`[DRAW_DEBUG] drawFood: No image for ${foodItem.type.id}. Using fallback color ${foodItem.type.color}.`);
+                    }
+                    try {
+                        ctx.fillStyle = foodItem.type.color;
+                        ctx.fillRect(foodItem.x * box, foodItem.y * box, box - 2, box - 2);
+                    } catch (e) {
+                        console.error(`[DRAW_DEBUG] drawFood: Error drawing fallback rect for ${foodItem.type.id}:`, e);
+                    }
                 }
             }
         });
+    } else {
+        console.warn("[DRAW_DEBUG] drawFood: ctx, box, or activeFoods is undefined/null.");
     }
+    console.log("[DRAW_DEBUG] drawFood: Exiting.");
 }
 
 /**
