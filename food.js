@@ -4,7 +4,7 @@
 // Global 'snake' array from snake.js is used by generateNewFood.
 
 const FOOD_TYPES = {
-    MOUSSE:      { id: 'MOUSSE',      color: '#A0522D', score: 3, effect: 'mousse_special', name: 'Mousse', imageSrc: 'img/citron.png' }, // Placeholder
+    MOUSSE:      { id: 'MOUSSE',      color: '#A0522D', score: 3, effect: 'mousse_special', name: 'Mousse', imageSrc: 'img/mousse.png' }, // Placeholder
     APPLE:       { id: 'APPLE',       color: '#ff0000', score: 5, effect: 'apple_special', name: 'Apple', imageSrc: 'img/appel.png' },   // Using existing appel.png
     PASTEQUE:    { id: 'PASTEQUE',    color: '#32CD32', score: 2, effect: 'speed_boost',   name: 'Pasteque', imageSrc: 'img/pasteque.png' },
     OBSTACLE:    { id: 'OBSTACLE',    color: '#777',    score: 0, effect: 'game_over',     name: 'Obstacle', imageSrc: 'img/orange.png' }, // Placeholder
