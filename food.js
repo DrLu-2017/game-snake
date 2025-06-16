@@ -4,10 +4,10 @@
 // Global 'snake' array from snake.js is used by generateNewFood.
 
 const FOOD_TYPES = {
-    MOUSSE:      { id: 'MOUSSE',      color: '#A0522D', score: 3, effect: 'mousse_special', name: 'Mousse', imageSrc: 'img/mousse.png' }, // Placeholder
-    APPLE:       { id: 'APPLE',       color: '#ff0000', score: 5, effect: 'apple_special', name: 'Apple', imageSrc: 'img/apple.png' },   // Using existing appel.png
+    MOUSSE:      { id: 'MOUSSE',      color: '#A0522D', score: 3, effect: 'mousse_special', name: 'Mousse', imageSrc: 'img/citron.png' }, // Placeholder
+    APPLE:       { id: 'APPLE',       color: '#ff0000', score: 5, effect: 'apple_special', name: 'Apple', imageSrc: 'img/appel.png' },   // Using existing appel.png
     PASTEQUE:    { id: 'PASTEQUE',    color: '#32CD32', score: 2, effect: 'speed_boost',   name: 'Pasteque', imageSrc: 'img/pasteque.png' },
-    OBSTACLE:    { id: 'OBSTACLE',    color: '#777',    score: 0, effect: 'game_over',     name: 'Obstacle', imageSrc: 'img/wall.png' }, // Placeholder
+    OBSTACLE:    { id: 'OBSTACLE',    color: '#777',    score: 0, effect: 'game_over',     name: 'Obstacle', imageSrc: 'img/orange.png' }, // Placeholder
     CITRON:      { id: 'CITRON',      color: '#FFFF00', score: 2, effect: 'citron_special',name: 'Citron', imageSrc: 'img/citron.png' },
     ORANGE:      { id: 'ORANGE',      color: '#FFA500', score: 2, effect: 'halve_length',  name: 'Orange', imageSrc: 'img/orange.png' }
 };
