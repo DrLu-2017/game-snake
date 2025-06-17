@@ -275,8 +275,7 @@ function updateGame() {
     if (isPaused) { drawGame(); return; }
 
     let foodEatenThisTick = false;
-    let processP1FoodThisTick = false;
-    let processP2FoodThisTick = false;
+    // processP1FoodThisTick and processP2FoodThisTick are replaced by p1FoodEatenOnThisTurn and p2FoodEatenOnThisTurn
     let head1 = null; 
     let head2 = null;
 
@@ -285,96 +284,134 @@ function updateGame() {
         if (p1AwaitingMessageAck) { /* P1 is paused */ } 
         else {
             head1 = moveSnake1(); 
+
+            let p1FoodEatenOnThisTurn = false;
+            const currentP1Width = getSnakeWidthP1();
+            const currentDx1 = dx1; // Assuming dx1, dy1 are global for P1 direction
+            const currentDy1 = dy1;
+
             if (head1) {
-                if (checkWallCollision(head1, getSnakeWidthP1()) || checkSelfCollision(head1, snake1Body)) {
+                if (checkWallCollision(head1, currentP1Width) || checkSelfCollision(head1, snake1Body)) { // Use currentP1Width for wall collision
                     p1_gameOver = true; console.log("Player 1 Game Over - Wall/Self Collision");
                 } else {
-                    const eatenFoodItem = checkFoodEaten(head1);
-                    if (eatenFoodItem) {
-                        if (isPlayer2Active && eatenFoodItem.type.id === p1LastEatenFoodType) {
-                            showFoodWarning(1, `Player 1: Cannot eat ${eatenFoodItem.type.name} again consecutively!`);
-                        } else {
-                            processP1FoodThisTick = true;
-                            p1LastEatenFoodType = eatenFoodItem.type.id;
-                            const foodIndex = activeFoods.findIndex(f => f.x === eatenFoodItem.x && f.y === eatenFoodItem.y);
-                            if (foodIndex > -1) activeFoods.splice(foodIndex, 1);
+                    const widthOffset = Math.floor((currentP1Width - 1) / 2);
+                    console.log(`[P1 FOOD DEBUG] Head at (${head1.x}, ${head1.y}), Width: ${currentP1Width}, Offset: ${widthOffset}, Direction: dx1=${currentDx1}, dy1=${currentDy1}`);
 
-                            p1_foodEatenThisRound++; score += eatenFoodItem.type.score;
+                    for (let offset = -widthOffset; offset <= widthOffset; offset++) {
+                        let checkX = head1.x;
+                        let checkY = head1.y;
 
-                            if (eatenFoodItem.type.effect === 'mousse_special') {
-                                console.log("Player 1 ate Mousse!");
-                                if (gameDifficultyBeforeMousse === null) gameDifficultyBeforeMousse = currentDifficultyLevel;
-                                setGameDifficulty('hard');
-                                console.log("Mousse: P1 triggered HARD mode. Game speed now:", gameSpeed);
-                                if (p1MousseTurnsActive === 0) p1OriginalWidthBeforeMousse = getSnakeWidthP1();
-                                setSnakeWidthP1(getSnakeWidthP1() * 2); // from snake.js
-                                p1MousseTurnsActive = 3; // This is a game.js global, snake.js has its own
-                                console.log(`Mousse: P1 width effect active/refreshed (${getSnakeWidthP1()}) for 3 turns.`);
-                            } else if (eatenFoodItem.type.effect === 'apple_special') {
-                                console.log("Player 1 ate Apple!");
-                                applyTransformationP1({ type: 'color_change', newColor: '#8A2BE2', duration: 5000 }); // from snake.js
-                                if (!p1SpeedEffectActive) {
-                                    p1OriginalSpeedBeforeEffect = gameSpeed; p1SpeedEffectActive = true;
-                                    gameSpeed = Math.floor(gameSpeed * 1.3); if (gameSpeed === p1OriginalSpeedBeforeEffect && gameSpeed > 1) gameSpeed++;
-                                    clearInterval(gameIntervalId); gameIntervalId = setInterval(updateGame, gameSpeed);
-                                    console.log("Apple: P1 speed slowed to", gameSpeed);
-                                    if (p1SpeedChangeTimeoutId) clearTimeout(p1SpeedChangeTimeoutId);
-                                    p1SpeedChangeTimeoutId = setTimeout(() => {
-                                        if (p1SpeedEffectActive) {
-                                            gameSpeed = p1OriginalSpeedBeforeEffect; clearInterval(gameIntervalId); gameIntervalId = setInterval(updateGame, gameSpeed);
-                                            p1SpeedEffectActive = false; console.log("Apple: P1 speed reverted to", gameSpeed);
-                                        }
-                                        p1SpeedChangeTimeoutId = null;
-                                    }, 5000);
-                                } else { console.log("Apple: P1 already has a speed effect active."); }
-                            } else if (eatenFoodItem.type.effect === 'speed_boost') { // Pasteque
-                                console.log("Player 1 ate Pasteque (speed boost)!");
-                                if (!p1SpeedEffectActive) {
-                                    p1OriginalSpeedBeforeEffect = gameSpeed; p1SpeedEffectActive = true;
-                                    gameSpeed = Math.floor(gameSpeed * 0.75); if (gameSpeed === p1OriginalSpeedBeforeEffect && gameSpeed > 1) gameSpeed--;
-                                    clearInterval(gameIntervalId); gameIntervalId = setInterval(updateGame, gameSpeed);
-                                    console.log("Pasteque: P1 speed boosted to", gameSpeed);
-                                    if (p1SpeedChangeTimeoutId) clearTimeout(p1SpeedChangeTimeoutId);
-                                    p1SpeedChangeTimeoutId = setTimeout(() => {
-                                        if (p1SpeedEffectActive) {
-                                            gameSpeed = p1OriginalSpeedBeforeEffect; clearInterval(gameIntervalId); gameIntervalId = setInterval(updateGame, gameSpeed);
-                                            p1SpeedEffectActive = false; console.log("Pasteque: P1 speed reverted to", gameSpeed);
-                                        }
-                                        p1SpeedChangeTimeoutId = null;
-                                    }, 5000);
-                                } else { console.log("Pasteque: P1 already has a speed effect active."); }
-                            } else if (eatenFoodItem.type.effect === 'citron_special') {
-                                console.log("Player 1 ate Citron!");
-                                const s1l = snake1Body.length; for(let i=0; i<s1l; i++) snake1Body.push({...snake1Body[snake1Body.length-1]});
-                                console.log("Citron: P1 length doubled.");
-                                incrementConsecutiveRedBlocksP1(); // from snake.js
-                                if (getConsecutiveRedBlocksP1() >= 2) { // from snake.js
-                                    incrementSnakeWidthP1(); resetConsecutiveRedBlocksP1(); // from snake.js
-                                    console.log("Citron: P1 ate 2 consecutively, width increased to", getSnakeWidthP1());
-                                }
-                            } else if (eatenFoodItem.type.effect === 'halve_length') { // Orange
-                                console.log("Player 1 ate Orange!");
-                                if(snake1Body.length > 2) { const t1l = Math.max(1, Math.floor(snake1Body.length/2)); while(snake1Body.length > t1l) snake1Body.pop(); console.log("Orange: P1 length halved."); }
-                            } else if (eatenFoodItem.type.effect === 'game_over') { // Obstacle
-                                p1_gameOver = true; console.log("Player 1 Game Over - Obstacle (Wall)");
-                            } else if (eatenFoodItem.type.effect === 'grow') { console.log("Player 1 ate food with 'grow' effect."); }
-
-                            if (eatenFoodItem.type.effect !== 'citron_special') {
-                                if (typeof getConsecutiveRedBlocksP1 === 'function' && getConsecutiveRedBlocksP1() > 0) {
-                                    resetConsecutiveRedBlocksP1(); console.log("P1: Citron consecutive counter reset due to eating other food.");
-                                }
-                            }
-                            if (!p1_gameOver) { 
-                                if (snake1Body.length >= p1_targetLength) {
-                                    p1_roundsAchieved++;
-                                    if (p1_roundsAchieved >= maxRoundsPerGame) { p1_gameOver = true; console.log("Player 1 Wins their track!"); }
-                                    else { startNewRoundForPlayer(1); }
-                                } else if (p1_foodEatenThisRound >= maxFoodPerRound) { p1_gameOver = true; console.log("Player 1 Game Over - Out of food for round"); }
-                            }
+                        if (currentDy1 === 0) { // Moving horizontally (left/right)
+                            checkY = head1.y + offset;
+                        } else { // Moving vertically (up/down)
+                            checkX = head1.x + offset;
                         }
-                    }
-                }
-            }
+                        console.log(`[P1 FOOD DEBUG] Checking cell (${checkX}, ${checkY}) for food.`);
+                        const eatenFoodItem = checkFoodEaten({ x: checkX, y: checkY });
+
+                        if (eatenFoodItem) {
+                            console.log(`P1 attempting to eat ${eatenFoodItem.type.name} at (${checkX}, ${checkY}) with width ${currentP1Width}`);
+                            if (isPlayer2Active && eatenFoodItem.type.id === p1LastEatenFoodType) {
+                                showFoodWarning(1, `Player 1: Cannot eat ${eatenFoodItem.type.name} again consecutively!`);
+                            } else {
+                                p1FoodEatenOnThisTurn = true; // Set flag here for this turn
+                                p1LastEatenFoodType = eatenFoodItem.type.id;
+                                const foodIndex = activeFoods.findIndex(f => f.x === eatenFoodItem.x && f.y === eatenFoodItem.y);
+                                if (foodIndex > -1) {
+                                    activeFoods.splice(foodIndex, 1);
+                                    console.log(`[P1 FOOD DEBUG] Successfully removed ${eatenFoodItem.type.name} from activeFoods.`);
+                                } else {
+                                    console.log(`[P1 FOOD DEBUG] Error: Eaten food ${eatenFoodItem.type.name} at (${eatenFoodItem.x}, ${eatenFoodItem.y}) not found in activeFoods. Skipping this item.`);
+                                    continue; // Skip processing for this non-existent food item
+                                }
+
+                                p1_foodEatenThisRound++; score += eatenFoodItem.type.score;
+
+                                if (eatenFoodItem.type.effect === 'mousse_special') {
+                                    console.log("Player 1 ate Mousse!");
+                                    if (gameDifficultyBeforeMousse === null) gameDifficultyBeforeMousse = currentDifficultyLevel;
+                                    setGameDifficulty('hard');
+                                    console.log("Mousse: P1 triggered HARD mode. Game speed now:", gameSpeed);
+                                    if (p1MousseTurnsActive === 0) p1OriginalWidthBeforeMousse = getSnakeWidthP1();
+                                    setSnakeWidthP1(getSnakeWidthP1() * 2);
+                                    p1MousseTurnsActive = 3;
+                                    console.log(`Mousse: P1 width effect active/refreshed (${getSnakeWidthP1()}) for 3 turns.`);
+                                } else if (eatenFoodItem.type.effect === 'width_increase_effect') {
+                                    console.log("Player 1 ate food with width_increase_effect (e.g., PASTEQUE)!");
+                                    if (p1WidthIncreaseTurnsActive === 0) {
+                                        p1OriginalWidthBeforeIncrease = getSnakeWidthP1();
+                                    }
+                                    setSnakeWidthP1(2);
+                                    p1WidthIncreaseTurnsActive = 3;
+                                    console.log(`P1 width increase active. Width: ${getSnakeWidthP1()}, Turns: ${p1WidthIncreaseTurnsActive}`);
+                                } else if (eatenFoodItem.type.effect === 'apple_special') {
+                                    console.log("Player 1 ate Apple!");
+                                    applyTransformationP1({ type: 'color_change', newColor: '#8A2BE2', duration: 5000 });
+                                    if (!p1SpeedEffectActive) {
+                                        p1OriginalSpeedBeforeEffect = gameSpeed; p1SpeedEffectActive = true;
+                                        gameSpeed = Math.floor(gameSpeed * 1.3); if (gameSpeed === p1OriginalSpeedBeforeEffect && gameSpeed > 1) gameSpeed++;
+                                        clearInterval(gameIntervalId); gameIntervalId = setInterval(updateGame, gameSpeed);
+                                        console.log("Apple: P1 speed slowed to", gameSpeed);
+                                        if (p1SpeedChangeTimeoutId) clearTimeout(p1SpeedChangeTimeoutId);
+                                        p1SpeedChangeTimeoutId = setTimeout(() => {
+                                            if (p1SpeedEffectActive) {
+                                                gameSpeed = p1OriginalSpeedBeforeEffect; clearInterval(gameIntervalId); gameIntervalId = setInterval(updateGame, gameSpeed);
+                                                p1SpeedEffectActive = false; console.log("Apple: P1 speed reverted to", gameSpeed);
+                                            }
+                                            p1SpeedChangeTimeoutId = null;
+                                        }, 5000);
+                                    } else { console.log("Apple: P1 already has a speed effect active."); }
+                                } else if (eatenFoodItem.type.effect === 'speed_boost') {
+                                    console.log("Player 1 ate Pasteque (speed boost)!");
+                                    if (!p1SpeedEffectActive) {
+                                        p1OriginalSpeedBeforeEffect = gameSpeed; p1SpeedEffectActive = true;
+                                        gameSpeed = Math.floor(gameSpeed * 0.75); if (gameSpeed === p1OriginalSpeedBeforeEffect && gameSpeed > 1) gameSpeed--;
+                                        clearInterval(gameIntervalId); gameIntervalId = setInterval(updateGame, gameSpeed);
+                                        console.log("Pasteque: P1 speed boosted to", gameSpeed);
+                                        if (p1SpeedChangeTimeoutId) clearTimeout(p1SpeedChangeTimeoutId);
+                                        p1SpeedChangeTimeoutId = setTimeout(() => {
+                                            if (p1SpeedEffectActive) {
+                                                gameSpeed = p1OriginalSpeedBeforeEffect; clearInterval(gameIntervalId); gameIntervalId = setInterval(updateGame, gameSpeed);
+                                                p1SpeedEffectActive = false; console.log("Pasteque: P1 speed reverted to", gameSpeed);
+                                            }
+                                            p1SpeedChangeTimeoutId = null;
+                                        }, 5000);
+                                    } else { console.log("Pasteque: P1 already has a speed effect active."); }
+                                } else if (eatenFoodItem.type.effect === 'citron_special') {
+                                    console.log("Player 1 ate Citron!");
+                                    const s1l = snake1Body.length; for(let i=0; i<s1l; i++) snake1Body.push({...snake1Body[snake1Body.length-1]});
+                                    console.log("Citron: P1 length doubled.");
+                                    incrementConsecutiveRedBlocksP1();
+                                    if (getConsecutiveRedBlocksP1() >= 2) {
+                                        incrementSnakeWidthP1(); resetConsecutiveRedBlocksP1();
+                                        console.log("Citron: P1 ate 2 consecutively, width increased to", getSnakeWidthP1());
+                                    }
+                                } else if (eatenFoodItem.type.effect === 'halve_length') {
+                                    console.log("Player 1 ate Orange!");
+                                    if(snake1Body.length > 2) { const t1l = Math.max(1, Math.floor(snake1Body.length/2)); while(snake1Body.length > t1l) snake1Body.pop(); console.log("Orange: P1 length halved."); }
+                                } else if (eatenFoodItem.type.effect === 'game_over') {
+                                    p1_gameOver = true; console.log("Player 1 Game Over - Obstacle (Wall)");
+                                } else if (eatenFoodItem.type.effect === 'grow') { console.log("Player 1 ate food with 'grow' effect."); }
+
+                                if (eatenFoodItem.type.effect !== 'citron_special') {
+                                    if (typeof getConsecutiveRedBlocksP1 === 'function' && getConsecutiveRedBlocksP1() > 0) {
+                                        resetConsecutiveRedBlocksP1(); console.log("P1: Citron consecutive counter reset due to eating other food.");
+                                    }
+                                }
+                                if (!p1_gameOver) {
+                                    if (snake1Body.length >= p1_targetLength) {
+                                        p1_roundsAchieved++;
+                                        if (p1_roundsAchieved >= maxRoundsPerGame) { p1_gameOver = true; console.log("Player 1 Wins their track!"); }
+                                        else { startNewRoundForPlayer(1); }
+                                    } else if (p1_foodEatenThisRound >= maxFoodPerRound) { p1_gameOver = true; console.log("Player 1 Game Over - Out of food for round"); }
+                                }
+                            } // End of food can be eaten (else of consecutive check)
+                        } // End of if (eatenFoodItem)
+                    } // End of for loop for width offset
+                } // End of else (no wall/self collision)
+            } // End of if (head1)
+
+            // Effect countdowns for P1
             if (head1 && !p1AwaitingMessageAck && typeof p1MousseTurnsActive !== 'undefined' && p1MousseTurnsActive > 0) {
                 p1MousseTurnsActive--; console.log(`P1 Mousse effect: ${p1MousseTurnsActive} turns remaining.`);
                 if (p1MousseTurnsActive === 0) {
@@ -385,105 +422,154 @@ function updateGame() {
                     } else { console.log("Mousse: P1 effect ended, but P2 Mousse may still be active. Difficulty not changed by P1."); }
                 }
             }
-        }
-    }
-    if (processP1FoodThisTick) foodEatenThisTick = true;
+            // Handle P1 Width Increase Effect Countdown
+            if (head1 && !p1AwaitingMessageAck && typeof p1WidthIncreaseTurnsActive !== 'undefined' && p1WidthIncreaseTurnsActive > 0) {
+                p1WidthIncreaseTurnsActive--;
+                console.log(`P1 width effect: ${p1WidthIncreaseTurnsActive} turns remaining.`);
+                if (p1WidthIncreaseTurnsActive === 0) {
+                    console.log(`P1 width effect expired. Reverting to width: ${p1OriginalWidthBeforeIncrease}`);
+                    setSnakeWidthP1(p1OriginalWidthBeforeIncrease);
+                }
+            }
+        } // Closes `else` for `if (p1AwaitingMessageAck)`
+    } // Closes `if (gameStarted && !isPaused && !p1_gameOver)`
+
+    if (p1FoodEatenOnThisTurn) foodEatenThisTick = true; // Use the new flag for P1
 
     // --- Player 2 Logic ---
     if (isPlayer2Active && gameStarted && !isPaused && !p2_gameOver) {
         if (p2AwaitingMessageAck) { /* P2 is paused */ } 
         else {
-            head2 = moveSnake2(); 
+            head2 = moveSnake2();
+
+            let p2FoodEatenOnThisTurn = false;
+            const currentP2Width = getSnakeWidthP2();
+            const currentDx2 = dx2; // Assuming dx2, dy2 are global for P2 direction
+            const currentDy2 = dy2;
+
             if (head2) {
-                if (checkWallCollision(head2, getSnakeWidthP2()) || checkSelfCollision(head2, snake2Body)) {
+                if (checkWallCollision(head2, currentP2Width) || checkSelfCollision(head2, snake2Body)) { // Use currentP2Width
                     p2_gameOver = true; console.log("Player 2 Game Over - Wall/Self Collision");
                 } else {
-                    const eatenFoodItemP2 = checkFoodEaten(head2);
-                    if (eatenFoodItemP2) {
-                        if (eatenFoodItemP2.type.id === p2LastEatenFoodType) { 
-                            showFoodWarning(2, `Player 2: Cannot eat ${eatenFoodItemP2.type.name} again consecutively!`);
-                        } else {
-                            processP2FoodThisTick = true;
-                            p2LastEatenFoodType = eatenFoodItemP2.type.id;
-                            const foodIndex = activeFoods.findIndex(f => f.x === eatenFoodItemP2.x && f.y === eatenFoodItemP2.y);
-                            if (foodIndex > -1) activeFoods.splice(foodIndex, 1);
-                            
-                            p2_foodEatenThisRound++; 
+                    const widthOffsetP2 = Math.floor((currentP2Width - 1) / 2);
+                    console.log(`[P2 FOOD DEBUG] Head at (${head2.x}, ${head2.y}), Width: ${currentP2Width}, Offset: ${widthOffsetP2}, Direction: dx2=${currentDx2}, dy2=${currentDy2}`);
 
-                            if (eatenFoodItemP2.type.effect === 'mousse_special') {
-                                console.log("Player 2 ate Mousse!");
-                                if (gameDifficultyBeforeMousse === null) gameDifficultyBeforeMousse = currentDifficultyLevel;
-                                setGameDifficulty('hard');
-                                console.log("Mousse: P2 triggered HARD mode. Game speed now:", gameSpeed);
-                                if (p2MousseTurnsActive === 0) p2OriginalWidthBeforeMousse = getSnakeWidthP2(); // from snake.js
-                                setSnakeWidthP2(getSnakeWidthP2() * 2); // from snake.js
-                                p2MousseTurnsActive = 3; // This is a game.js global
-                                console.log(`Mousse: P2 width effect active/refreshed (${getSnakeWidthP2()}) for 3 turns.`);
-                            } else if (eatenFoodItemP2.type.effect === 'apple_special') {
-                                console.log("Player 2 ate Apple!");
-                                applyTransformationP2({ type: 'color_change', newColor: '#8A2BE2', duration: 5000 }); // from snake.js
-                                if (!p2SpeedEffectActive) {
-                                    p2OriginalSpeedBeforeEffect = gameSpeed; p2SpeedEffectActive = true;
-                                    gameSpeed = Math.floor(gameSpeed * 1.3); if (gameSpeed === p2OriginalSpeedBeforeEffect && gameSpeed > 1) gameSpeed++;
-                                    clearInterval(gameIntervalId); gameIntervalId = setInterval(updateGame, gameSpeed);
-                                    console.log("Apple: P2 speed slowed to", gameSpeed);
-                                    if (p2SpeedChangeTimeoutId) clearTimeout(p2SpeedChangeTimeoutId);
-                                    p2SpeedChangeTimeoutId = setTimeout(() => {
-                                        if (p2SpeedEffectActive) {
-                                            gameSpeed = p2OriginalSpeedBeforeEffect; clearInterval(gameIntervalId); gameIntervalId = setInterval(updateGame, gameSpeed);
-                                            p2SpeedEffectActive = false; console.log("Apple: P2 speed reverted to", gameSpeed);
-                                        }
-                                        p2SpeedChangeTimeoutId = null;
-                                    }, 5000);
-                                } else { console.log("Apple: P2 already has a speed effect active."); }
-                            } else if (eatenFoodItemP2.type.effect === 'speed_boost') { // Pasteque
-                                console.log("Player 2 ate Pasteque (speed boost)!");
-                                if (!p2SpeedEffectActive) {
-                                    p2OriginalSpeedBeforeEffect = gameSpeed; p2SpeedEffectActive = true;
-                                    gameSpeed = Math.floor(gameSpeed * 0.75); if (gameSpeed === p2OriginalSpeedBeforeEffect && gameSpeed > 1) gameSpeed--;
-                                    clearInterval(gameIntervalId); gameIntervalId = setInterval(updateGame, gameSpeed);
-                                    console.log("Pasteque: P2 speed boosted to", gameSpeed);
-                                    if (p2SpeedChangeTimeoutId) clearTimeout(p2SpeedChangeTimeoutId);
-                                    p2SpeedChangeTimeoutId = setTimeout(() => {
-                                        if (p2SpeedEffectActive) {
-                                            gameSpeed = p2OriginalSpeedBeforeEffect; clearInterval(gameIntervalId); gameIntervalId = setInterval(updateGame, gameSpeed);
-                                            p2SpeedEffectActive = false; console.log("Pasteque: P2 speed reverted to", gameSpeed);
-                                        }
-                                        p2SpeedChangeTimeoutId = null;
-                                    }, 5000);
-                                } else { console.log("Pasteque: P2 already has a speed effect active."); }
-                            } else if (eatenFoodItemP2.type.effect === 'citron_special') {
-                                console.log("Player 2 ate Citron!");
-                                const s2l = snake2Body.length; for(let i=0; i<s2l; i++) snake2Body.push({...snake2Body[snake2Body.length-1]});
-                                console.log("Citron: P2 length doubled.");
-                                incrementConsecutiveRedBlocksP2(); // from snake.js
-                                if (getConsecutiveRedBlocksP2() >= 2) { // from snake.js
-                                    incrementSnakeWidthP2(); resetConsecutiveRedBlocksP2(); // from snake.js
-                                    console.log("Citron: P2 ate 2 consecutively, width increased to", getSnakeWidthP2());
-                                }
-                            } else if (eatenFoodItemP2.type.effect === 'halve_length') { // Orange
-                                console.log("Player 2 ate Orange!");
-                                if(snake2Body.length > 2) { const t2l = Math.max(1, Math.floor(snake2Body.length/2)); while(snake2Body.length > t2l) snake2Body.pop(); console.log("Orange: P2 length halved.");}
-                            } else if (eatenFoodItemP2.type.effect === 'game_over') { // Obstacle
-                                p2_gameOver = true; console.log("Player 2 Game Over - Obstacle (Wall)");
-                            } else if (eatenFoodItemP2.type.effect === 'grow') { console.log("Player 2 ate food with 'grow' effect.");}
+                    for (let offset = -widthOffsetP2; offset <= widthOffsetP2; offset++) {
+                        let checkX = head2.x;
+                        let checkY = head2.y;
 
-                            if (eatenFoodItemP2.type.effect !== 'citron_special') {
-                                 if (typeof getConsecutiveRedBlocksP2 === 'function' && getConsecutiveRedBlocksP2() > 0) {
-                                    resetConsecutiveRedBlocksP2(); console.log("P2: Citron consecutive counter reset due to eating other food.");
-                                 }
-                            }
-                            if (!p2_gameOver) { 
-                                if (snake2Body.length >= p2_targetLength) {
-                                    p2_roundsAchieved++;
-                                    if (p2_roundsAchieved >= maxRoundsPerGame) { p2_gameOver = true; console.log("Player 2 Wins their track!"); }
-                                    else { startNewRoundForPlayer(2); }
-                                } else if (p2_foodEatenThisRound >= maxFoodPerRound) { p2_gameOver = true; console.log("Player 2 Game Over - Out of food"); }
-                            }
+                        if (currentDy2 === 0) { // Moving horizontally
+                            checkY = head2.y + offset;
+                        } else { // Moving vertically
+                            checkX = head2.x + offset;
                         }
-                    }
-                }
-            }
+                        console.log(`[P2 FOOD DEBUG] Checking cell (${checkX}, ${checkY}) for food.`);
+                        const eatenFoodItemP2 = checkFoodEaten({ x: checkX, y: checkY });
+
+                        if (eatenFoodItemP2) {
+                            console.log(`P2 attempting to eat ${eatenFoodItemP2.type.name} at (${checkX}, ${checkY}) with width ${currentP2Width}`);
+                            if (eatenFoodItemP2.type.id === p2LastEatenFoodType) {
+                                showFoodWarning(2, `Player 2: Cannot eat ${eatenFoodItemP2.type.name} again consecutively!`);
+                            } else {
+                                p2FoodEatenOnThisTurn = true; // Set flag for P2
+                                p2LastEatenFoodType = eatenFoodItemP2.type.id;
+                                const foodIndex = activeFoods.findIndex(f => f.x === eatenFoodItemP2.x && f.y === eatenFoodItemP2.y);
+                                if (foodIndex > -1) {
+                                    activeFoods.splice(foodIndex, 1);
+                                    console.log(`[P2 FOOD DEBUG] Successfully removed ${eatenFoodItemP2.type.name} from activeFoods.`);
+                                } else {
+                                    console.log(`[P2 FOOD DEBUG] Error: Eaten food ${eatenFoodItemP2.type.name} at (${eatenFoodItemP2.x}, ${eatenFoodItemP2.y}) not found in activeFoods. Skipping this item.`);
+                                    continue;
+                                }
+
+                                p2_foodEatenThisRound++;
+                                score += eatenFoodItemP2.type.score; // P2 also adds to global score
+
+                                if (eatenFoodItemP2.type.effect === 'mousse_special') {
+                                    console.log("Player 2 ate Mousse!");
+                                    if (gameDifficultyBeforeMousse === null) gameDifficultyBeforeMousse = currentDifficultyLevel;
+                                    setGameDifficulty('hard');
+                                    console.log("Mousse: P2 triggered HARD mode. Game speed now:", gameSpeed);
+                                    if (p2MousseTurnsActive === 0) p2OriginalWidthBeforeMousse = getSnakeWidthP2();
+                                    setSnakeWidthP2(getSnakeWidthP2() * 2);
+                                    p2MousseTurnsActive = 3;
+                                    console.log(`Mousse: P2 width effect active/refreshed (${getSnakeWidthP2()}) for 3 turns.`);
+                                } else if (eatenFoodItemP2.type.effect === 'width_increase_effect') {
+                                    console.log("Player 2 ate food with width_increase_effect (e.g., PASTEQUE)!");
+                                    if (p2WidthIncreaseTurnsActive === 0) {
+                                        p2OriginalWidthBeforeIncrease = getSnakeWidthP2();
+                                    }
+                                    setSnakeWidthP2(2);
+                                    p2WidthIncreaseTurnsActive = 3;
+                                    console.log(`P2 width increase active. Width: ${getSnakeWidthP2()}, Turns: ${p2WidthIncreaseTurnsActive}`);
+                                } else if (eatenFoodItemP2.type.effect === 'apple_special') {
+                                    console.log("Player 2 ate Apple!");
+                                    applyTransformationP2({ type: 'color_change', newColor: '#8A2BE2', duration: 5000 });
+                                    if (!p2SpeedEffectActive) {
+                                        p2OriginalSpeedBeforeEffect = gameSpeed; p2SpeedEffectActive = true;
+                                        gameSpeed = Math.floor(gameSpeed * 1.3); if (gameSpeed === p2OriginalSpeedBeforeEffect && gameSpeed > 1) gameSpeed++;
+                                        clearInterval(gameIntervalId); gameIntervalId = setInterval(updateGame, gameSpeed);
+                                        console.log("Apple: P2 speed slowed to", gameSpeed);
+                                        if (p2SpeedChangeTimeoutId) clearTimeout(p2SpeedChangeTimeoutId);
+                                        p2SpeedChangeTimeoutId = setTimeout(() => {
+                                            if (p2SpeedEffectActive) {
+                                                gameSpeed = p2OriginalSpeedBeforeEffect; clearInterval(gameIntervalId); gameIntervalId = setInterval(updateGame, gameSpeed);
+                                                p2SpeedEffectActive = false; console.log("Apple: P2 speed reverted to", gameSpeed);
+                                            }
+                                            p2SpeedChangeTimeoutId = null;
+                                        }, 5000);
+                                    } else { console.log("Apple: P2 already has a speed effect active."); }
+                                } else if (eatenFoodItemP2.type.effect === 'speed_boost') {
+                                    console.log("Player 2 ate Pasteque (speed boost)!");
+                                    if (!p2SpeedEffectActive) {
+                                        p2OriginalSpeedBeforeEffect = gameSpeed; p2SpeedEffectActive = true;
+                                        gameSpeed = Math.floor(gameSpeed * 0.75); if (gameSpeed === p2OriginalSpeedBeforeEffect && gameSpeed > 1) gameSpeed--;
+                                        clearInterval(gameIntervalId); gameIntervalId = setInterval(updateGame, gameSpeed);
+                                        console.log("Pasteque: P2 speed boosted to", gameSpeed);
+                                        if (p2SpeedChangeTimeoutId) clearTimeout(p2SpeedChangeTimeoutId);
+                                        p2SpeedChangeTimeoutId = setTimeout(() => {
+                                            if (p2SpeedEffectActive) {
+                                                gameSpeed = p2OriginalSpeedBeforeEffect; clearInterval(gameIntervalId); gameIntervalId = setInterval(updateGame, gameSpeed);
+                                                p2SpeedEffectActive = false; console.log("Pasteque: P2 speed reverted to", gameSpeed);
+                                            }
+                                            p2SpeedChangeTimeoutId = null;
+                                        }, 5000);
+                                    } else { console.log("Pasteque: P2 already has a speed effect active."); }
+                                } else if (eatenFoodItemP2.type.effect === 'citron_special') {
+                                    console.log("Player 2 ate Citron!");
+                                    const s2l = snake2Body.length; for(let i=0; i<s2l; i++) snake2Body.push({...snake2Body[snake2Body.length-1]});
+                                    console.log("Citron: P2 length doubled.");
+                                    incrementConsecutiveRedBlocksP2();
+                                    if (getConsecutiveRedBlocksP2() >= 2) {
+                                        incrementSnakeWidthP2(); resetConsecutiveRedBlocksP2();
+                                        console.log("Citron: P2 ate 2 consecutively, width increased to", getSnakeWidthP2());
+                                    }
+                                } else if (eatenFoodItemP2.type.effect === 'halve_length') {
+                                    console.log("Player 2 ate Orange!");
+                                    if(snake2Body.length > 2) { const t2l = Math.max(1, Math.floor(snake2Body.length/2)); while(snake2Body.length > t2l) snake2Body.pop(); console.log("Orange: P2 length halved.");}
+                                } else if (eatenFoodItemP2.type.effect === 'game_over') {
+                                    p2_gameOver = true; console.log("Player 2 Game Over - Obstacle (Wall)");
+                                } else if (eatenFoodItemP2.type.effect === 'grow') { console.log("Player 2 ate food with 'grow' effect.");}
+
+                                if (eatenFoodItemP2.type.effect !== 'citron_special') {
+                                     if (typeof getConsecutiveRedBlocksP2 === 'function' && getConsecutiveRedBlocksP2() > 0) {
+                                        resetConsecutiveRedBlocksP2(); console.log("P2: Citron consecutive counter reset due to eating other food.");
+                                     }
+                                }
+                                if (!p2_gameOver) {
+                                    if (snake2Body.length >= p2_targetLength) {
+                                        p2_roundsAchieved++;
+                                        if (p2_roundsAchieved >= maxRoundsPerGame) { p2_gameOver = true; console.log("Player 2 Wins their track!"); }
+                                        else { startNewRoundForPlayer(2); }
+                                    } else if (p2_foodEatenThisRound >= maxFoodPerRound) { p2_gameOver = true; console.log("Player 2 Game Over - Out of food"); }
+                                }
+                            } // End of P2 food can be eaten
+                        } // End of if (eatenFoodItemP2)
+                    } // End of P2 for loop for width offset
+                } // End of P2 else (no wall/self collision)
+            } // End of if (head2)
+
+            // Effect countdowns for P2
             if (head2 && !p2AwaitingMessageAck && typeof p2MousseTurnsActive !== 'undefined' && p2MousseTurnsActive > 0) {
                 p2MousseTurnsActive--; console.log(`P2 Mousse effect: ${p2MousseTurnsActive} turns remaining.`);
                 if (p2MousseTurnsActive === 0) {
@@ -494,15 +580,25 @@ function updateGame() {
                     } else { console.log("Mousse: P2 effect ended, but P1 Mousse may still be active. Difficulty not changed by P2.");}
                 }
             }
-        }
-    }
-    if (processP2FoodThisTick) foodEatenThisTick = true;
+            // Handle P2 Width Increase Effect Countdown
+            if (head2 && !p2AwaitingMessageAck && typeof p2WidthIncreaseTurnsActive !== 'undefined' && p2WidthIncreaseTurnsActive > 0) {
+                p2WidthIncreaseTurnsActive--;
+                console.log(`P2 width effect: ${p2WidthIncreaseTurnsActive} turns remaining.`);
+                if (p2WidthIncreaseTurnsActive === 0) {
+                    console.log(`P2 width effect expired. Reverting to width: ${p2OriginalWidthBeforeIncrease}`);
+                    setSnakeWidthP2(p2OriginalWidthBeforeIncrease);
+                }
+            }
+        } // Closes `else` for `if (p2AwaitingMessageAck)`
+    } // Closes `if (isPlayer2Active && gameStarted && !isPaused && !p2_gameOver)`
+
+    if (p2FoodEatenOnThisTurn) foodEatenThisTick = true; // Use the new flag for P2
 
     // Tail Popping Logic
     if (foodEatenThisTick) {
-        generateNewFood(); // from food.js
-        if (!processP1FoodThisTick && gameStarted && !p1_gameOver && !p1AwaitingMessageAck && snake1Body && snake1Body.length > 1) snake1Body.pop();
-        if (!processP2FoodThisTick && isPlayer2Active && gameStarted && !p2_gameOver && !p2AwaitingMessageAck && snake2Body && snake2Body.length > 1) snake2Body.pop();
+        generateNewFood();
+        if (!p1FoodEatenOnThisTurn && gameStarted && !p1_gameOver && !p1AwaitingMessageAck && snake1Body && snake1Body.length > 1) snake1Body.pop();
+        if (!p2FoodEatenOnThisTurn && isPlayer2Active && gameStarted && !p2_gameOver && !p2AwaitingMessageAck && snake2Body && snake2Body.length > 1) snake2Body.pop();
     } else {
         if (gameStarted && !p1_gameOver && !p1AwaitingMessageAck && snake1Body && snake1Body.length > 1) snake1Body.pop();
         if (isPlayer2Active && gameStarted && !p2_gameOver && !p2AwaitingMessageAck && snake2Body && snake2Body.length > 1) snake2Body.pop();

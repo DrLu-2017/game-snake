@@ -14,6 +14,8 @@ let snake1Width = 1;
 let consecutiveRedBlocksEaten1 = 0;
 let p1MousseTurnsActive = 0;
 let p1OriginalWidthBeforeMousse = 1;
+let p1WidthIncreaseTurnsActive = 0;
+let p1OriginalWidthBeforeIncrease = 1;
 
 // --- Player 2 State ---
 let snake2Body = []; // Will be initialized in resetSnake2
@@ -26,6 +28,8 @@ let snake2Width = 1;
 let consecutiveRedBlocksEaten2 = 0;
 let p2MousseTurnsActive = 0;
 let p2OriginalWidthBeforeMousse = 1;
+let p2WidthIncreaseTurnsActive = 0;
+let p2OriginalWidthBeforeIncrease = 1;
 
 const maxSnakeWidth = 4; // Shared max width, can be player-specific if needed
 

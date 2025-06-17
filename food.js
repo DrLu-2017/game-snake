@@ -6,7 +6,7 @@
 const FOOD_TYPES = {
     MOUSSE:      { id: 'MOUSSE',      color: '#A0522D', score: 3, effect: 'mousse_special', name: 'Mousse', imageSrc: 'img/mousse.png' }, // Placeholder
     APPLE:       { id: 'APPLE',       color: '#ff0000', score: 5, effect: 'apple_special', name: 'Apple', imageSrc: 'img/appel.png' },   // Using existing appel.png
-    PASTEQUE:    { id: 'PASTEQUE',    color: '#32CD32', score: 2, effect: 'speed_boost',   name: 'Pasteque', imageSrc: 'img/pasteque.png' },
+    PASTEQUE:    { id: 'PASTEQUE',    color: '#32CD32', score: 2, effect: 'width_increase_effect',   name: 'Pasteque', imageSrc: 'img/pasteque.png' }, // Modified for width increase effect
     OBSTACLE:    { id: 'OBSTACLE',    color: '#777',    score: 0, effect: 'game_over',     name: 'Obstacle', imageSrc: 'img/orange.png' }, // Placeholder
     CITRON:      { id: 'CITRON',      color: '#FFFF00', score: 2, effect: 'citron_special',name: 'Citron', imageSrc: 'img/citron.png' },
     ORANGE:      { id: 'ORANGE',      color: '#FFA500', score: 2, effect: 'halve_length',  name: 'Orange', imageSrc: 'img/orange.png' }
@@ -14,6 +14,9 @@ const FOOD_TYPES = {
 
 // Preload images for food types
 Object.values(FOOD_TYPES).forEach(foodType => {
+    if (foodType.id === 'PASTEQUE') {
+        console.log('PASTEQUE food type modified for width_increase_effect');
+    }
     if (foodType.imageSrc) {
         const img = new Image();
         img.src = foodType.imageSrc;
