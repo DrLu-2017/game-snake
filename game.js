@@ -283,6 +283,9 @@ function updateGame() {
 
     // --- Player 1 Logic ---
     if (gameStarted && !isPaused && !p1_gameOver) {
+        // TEST LOG: Start of P1 logic in updateGame
+        console.log(`[TEST_LOG P1] updateGame start: snake1Width=${typeof getSnakeWidthP1 === 'function' ? getSnakeWidthP1() : 'N/A'}, p1MousseFoodCountdown=${p1MousseFoodCountdown}, p1WidthIncreaseFoodCountdown=${p1WidthIncreaseFoodCountdown}`);
+
         if (p1AwaitingMessageAck) { /* P1 is paused */ } 
         else {
             head1 = moveSnake1(); 
@@ -329,23 +332,32 @@ function updateGame() {
 
                                 p1_foodEatenThisRound++; score += eatenFoodItem.type.score;
 
+                                // TEST LOG: P1 eating any food - before countdown decrement
+                                console.log(`[TEST_LOG P1] Ate ${eatenFoodItem.type.name}. Before decrement: MousseCountdown=${p1MousseFoodCountdown}, WidthIncreaseCountdown=${p1WidthIncreaseFoodCountdown}`);
+
                                 if (eatenFoodItem.type.effect === 'mousse_special') {
                                     console.log("Player 1 ate Mousse!");
+                                    const prevDifficulty = currentDifficultyLevel;
                                     if (gameDifficultyBeforeMousse === null) gameDifficultyBeforeMousse = currentDifficultyLevel;
                                     setGameDifficulty('hard');
-                                    console.log("Mousse: P1 triggered HARD mode. Game speed now:", gameSpeed);
-                                    if (p1MousseTurnsActive === 0) p1OriginalWidthBeforeMousse = getSnakeWidthP1();
+                                    // TEST LOG: Mousse activation & difficulty change
+                                    console.log(`[TEST_LOG P1] MOUSSE ACTIVATED. Initial Food Countdown: 3. Original Width Stored: ${p1OriginalWidthBeforeMousse} (if zero countdown). Current Width: ${getSnakeWidthP1()}. Difficulty changed from ${prevDifficulty} to ${currentDifficultyLevel}. Speed: ${gameSpeed}`);
+                                    if (p1MousseFoodCountdown === 0) p1OriginalWidthBeforeMousse = getSnakeWidthP1(); // Store original width if not already in effect
                                     setSnakeWidthP1(getSnakeWidthP1() * 2);
-                                    p1MousseTurnsActive = 3;
-                                    console.log(`Mousse: P1 width effect active/refreshed (${getSnakeWidthP1()}) for 3 turns.`);
+                                    p1MousseFoodCountdown = 3; // Set/reset countdown
+                                    console.log(`Mousse: P1 width effect active/refreshed (${getSnakeWidthP1()}) for 3 turns. New MousseCountdown: ${p1MousseFoodCountdown}`);
                                 } else if (eatenFoodItem.type.effect === 'width_increase_effect') {
                                     console.log("Player 1 ate food with width_increase_effect (e.g., PASTEQUE)!");
-                                    if (p1WidthIncreaseTurnsActive === 0) {
-                                        p1OriginalWidthBeforeIncrease = getSnakeWidthP1();
+                                     // TEST LOG: Pasteque activation
+                                    if (p1WidthIncreaseFoodCountdown === 0) {
+                                        p1OriginalWidthBeforeIncrease = getSnakeWidthP1(); // Store original width if not already in effect
+                                        console.log(`[TEST_LOG P1] PASTEQUE ACTIVATED (first time). Original Width Stored: ${p1OriginalWidthBeforeIncrease}. Current Width: ${getSnakeWidthP1()}.`);
+                                    } else {
+                                        console.log(`[TEST_LOG P1] PASTEQUE RE-ACTIVATED/EXTENDED. Current Width: ${getSnakeWidthP1()}.`);
                                     }
                                     setSnakeWidthP1(2);
-                                    p1WidthIncreaseTurnsActive = 3;
-                                    console.log(`P1 width increase active. Width: ${getSnakeWidthP1()}, Turns: ${p1WidthIncreaseTurnsActive}`);
+                                    p1WidthIncreaseFoodCountdown = 3; // Set/reset countdown
+                                    console.log(`P1 width increase active. Width: ${getSnakeWidthP1()}, Turns: ${p1WidthIncreaseFoodCountdown}. New WidthIncreaseCountdown: ${p1WidthIncreaseFoodCountdown}`);
                                 } else if (eatenFoodItem.type.effect === 'apple_special') {
                                     console.log("Player 1 ate Apple!");
                                     applyTransformationP1({ type: 'color_change', newColor: '#8A2BE2', duration: 5000 });
@@ -408,31 +420,45 @@ function updateGame() {
                                     } else if (p1_foodEatenThisRound >= maxFoodPerRound) { p1_gameOver = true; console.log("Player 1 Game Over - Out of food for round"); }
                                 }
                             } // End of food can be eaten (else of consecutive check)
+
+                            // --- Player 1 Food Consumption Countdown Logic ---
+                            if (p1FoodEatenOnThisTurn) { // Check if food was eaten in this iteration
+                                if (typeof p1MousseFoodCountdown !== 'undefined' && p1MousseFoodCountdown > 0) {
+                                    p1MousseFoodCountdown--;
+                                    // TEST LOG: After Mousse countdown decrement
+                                    console.log(`[TEST_LOG P1] Mousse Countdown Decremented. New value: ${p1MousseFoodCountdown}`);
+                                    if (p1MousseFoodCountdown === 0) {
+                                        const revertedWidth = p1OriginalWidthBeforeMousse;
+                                        console.log(`[TEST_LOG P1] MOUSSE EXPIRED. Reverting width to ${revertedWidth}. Current width: ${getSnakeWidthP1()}.`);
+                                        setSnakeWidthP1(revertedWidth); // from snake.js
+                                        console.log(`[TEST_LOG P1] Width after Mousse reversion: ${getSnakeWidthP1()}`);
+                                        if ((typeof p2MousseFoodCountdown === 'undefined' || p2MousseFoodCountdown === 0) && gameDifficultyBeforeMousse !== null) {
+                                            const prevDifficulty = currentDifficultyLevel;
+                                            setGameDifficulty(gameDifficultyBeforeMousse);
+                                            // TEST LOG: Mousse difficulty reversion
+                                            console.log(`[TEST_LOG P1] Mousse difficulty reverted from ${prevDifficulty} to ${gameDifficultyBeforeMousse}. Speed: ${gameSpeed}`);
+                                            gameDifficultyBeforeMousse = null;
+                                        } else {
+                                            console.log("[TEST_LOG P1] Mousse: P1 effect ended, but P2 Mousse may still be active or no original difficulty stored. Difficulty not changed by P1.");
+                                        }
+                                    }
+                                }
+                                if (typeof p1WidthIncreaseFoodCountdown !== 'undefined' && p1WidthIncreaseFoodCountdown > 0) {
+                                    p1WidthIncreaseFoodCountdown--;
+                                    // TEST LOG: After Width Increase countdown decrement
+                                    console.log(`[TEST_LOG P1] Width Increase Countdown Decremented. New value: ${p1WidthIncreaseFoodCountdown}`);
+                                    if (p1WidthIncreaseFoodCountdown === 0) {
+                                        const revertedWidth = p1OriginalWidthBeforeIncrease;
+                                        console.log(`[TEST_LOG P1] PASTEQUE EXPIRED. Reverting width to ${revertedWidth}. Current width: ${getSnakeWidthP1()}.`);
+                                        setSnakeWidthP1(revertedWidth);
+                                        console.log(`[TEST_LOG P1] Width after Pasteque reversion: ${getSnakeWidthP1()}`);
+                                    }
+                                }
+                            }
                         } // End of if (eatenFoodItem)
                     } // End of for loop for width offset
                 } // End of else (no wall/self collision)
             } // End of if (head1)
-
-            // Effect countdowns for P1
-            if (head1 && !p1AwaitingMessageAck && typeof p1MousseTurnsActive !== 'undefined' && p1MousseTurnsActive > 0) {
-                p1MousseTurnsActive--; console.log(`P1 Mousse effect: ${p1MousseTurnsActive} turns remaining.`);
-                if (p1MousseTurnsActive === 0) {
-                    console.log("P1 Mousse effect expired."); setSnakeWidthP1(p1OriginalWidthBeforeMousse); // from snake.js
-                    if ((typeof p2MousseTurnsActive === 'undefined' || p2MousseTurnsActive === 0) && gameDifficultyBeforeMousse !== null) {
-                        setGameDifficulty(gameDifficultyBeforeMousse); console.log("Mousse: Game difficulty reverted to", gameDifficultyBeforeMousse, "Speed:", gameSpeed);
-                        gameDifficultyBeforeMousse = null;
-                    } else { console.log("Mousse: P1 effect ended, but P2 Mousse may still be active. Difficulty not changed by P1."); }
-                }
-            }
-            // Handle P1 Width Increase Effect Countdown
-            if (head1 && !p1AwaitingMessageAck && typeof p1WidthIncreaseTurnsActive !== 'undefined' && p1WidthIncreaseTurnsActive > 0) {
-                p1WidthIncreaseTurnsActive--;
-                console.log(`P1 width effect: ${p1WidthIncreaseTurnsActive} turns remaining.`);
-                if (p1WidthIncreaseTurnsActive === 0) {
-                    console.log(`P1 width effect expired. Reverting to width: ${p1OriginalWidthBeforeIncrease}`);
-                    setSnakeWidthP1(p1OriginalWidthBeforeIncrease);
-                }
-            }
         } // Closes `else` for `if (p1AwaitingMessageAck)`
     } // Closes `if (gameStarted && !isPaused && !p1_gameOver)`
 
@@ -492,18 +518,18 @@ function updateGame() {
                                     if (gameDifficultyBeforeMousse === null) gameDifficultyBeforeMousse = currentDifficultyLevel;
                                     setGameDifficulty('hard');
                                     console.log("Mousse: P2 triggered HARD mode. Game speed now:", gameSpeed);
-                                    if (p2MousseTurnsActive === 0) p2OriginalWidthBeforeMousse = getSnakeWidthP2();
+                                    if (p2MousseFoodCountdown === 0) p2OriginalWidthBeforeMousse = getSnakeWidthP2();
                                     setSnakeWidthP2(getSnakeWidthP2() * 2);
-                                    p2MousseTurnsActive = 3;
+                                    p2MousseFoodCountdown = 3;
                                     console.log(`Mousse: P2 width effect active/refreshed (${getSnakeWidthP2()}) for 3 turns.`);
                                 } else if (eatenFoodItemP2.type.effect === 'width_increase_effect') {
                                     console.log("Player 2 ate food with width_increase_effect (e.g., PASTEQUE)!");
-                                    if (p2WidthIncreaseTurnsActive === 0) {
+                                    if (p2WidthIncreaseFoodCountdown === 0) {
                                         p2OriginalWidthBeforeIncrease = getSnakeWidthP2();
                                     }
                                     setSnakeWidthP2(2);
-                                    p2WidthIncreaseTurnsActive = 3;
-                                    console.log(`P2 width increase active. Width: ${getSnakeWidthP2()}, Turns: ${p2WidthIncreaseTurnsActive}`);
+                                    p2WidthIncreaseFoodCountdown = 3;
+                                    console.log(`P2 width increase active. Width: ${getSnakeWidthP2()}, Turns: ${p2WidthIncreaseFoodCountdown}`);
                                 } else if (eatenFoodItemP2.type.effect === 'apple_special') {
                                     console.log("Player 2 ate Apple!");
                                     applyTransformationP2({ type: 'color_change', newColor: '#8A2BE2', duration: 5000 });
@@ -566,31 +592,37 @@ function updateGame() {
                                     } else if (p2_foodEatenThisRound >= maxFoodPerRound) { p2_gameOver = true; console.log("Player 2 Game Over - Out of food"); }
                                 }
                             } // End of P2 food can be eaten
+
+                            // --- Player 2 Food Consumption Countdown Logic ---
+                            if (p2FoodEatenOnThisTurn) { // Check if food was eaten in this iteration
+                                if (typeof p2MousseFoodCountdown !== 'undefined' && p2MousseFoodCountdown > 0) {
+                                    p2MousseFoodCountdown--;
+                                    console.log(`P2 Mousse effect (food eaten): ${p2MousseFoodCountdown} food items remaining.`);
+                                    if (p2MousseFoodCountdown === 0) {
+                                        console.log("P2 Mousse effect expired (food eaten).");
+                                        setSnakeWidthP2(p2OriginalWidthBeforeMousse); // from snake.js
+                                        if ((typeof p1MousseFoodCountdown === 'undefined' || p1MousseFoodCountdown === 0) && gameDifficultyBeforeMousse !== null) {
+                                            setGameDifficulty(gameDifficultyBeforeMousse);
+                                            console.log("Mousse: Game difficulty reverted to", gameDifficultyBeforeMousse, "Speed:", gameSpeed);
+                                            gameDifficultyBeforeMousse = null;
+                                        } else {
+                                            console.log("Mousse: P2 effect ended, but P1 Mousse may still be active or no original difficulty stored. Difficulty not changed by P2.");
+                                        }
+                                    }
+                                }
+                                if (typeof p2WidthIncreaseFoodCountdown !== 'undefined' && p2WidthIncreaseFoodCountdown > 0) {
+                                    p2WidthIncreaseFoodCountdown--;
+                                    console.log(`P2 width effect (food eaten): ${p2WidthIncreaseFoodCountdown} food items remaining.`);
+                                    if (p2WidthIncreaseFoodCountdown === 0) {
+                                        console.log(`P2 width effect expired (food eaten). Reverting to width: ${p2OriginalWidthBeforeIncrease}`);
+                                        setSnakeWidthP2(p2OriginalWidthBeforeIncrease);
+                                    }
+                                }
+                            }
                         } // End of if (eatenFoodItemP2)
                     } // End of P2 for loop for width offset
                 } // End of P2 else (no wall/self collision)
             } // End of if (head2)
-
-            // Effect countdowns for P2
-            if (head2 && !p2AwaitingMessageAck && typeof p2MousseTurnsActive !== 'undefined' && p2MousseTurnsActive > 0) {
-                p2MousseTurnsActive--; console.log(`P2 Mousse effect: ${p2MousseTurnsActive} turns remaining.`);
-                if (p2MousseTurnsActive === 0) {
-                    console.log("P2 Mousse effect expired."); setSnakeWidthP2(p2OriginalWidthBeforeMousse); // from snake.js
-                    if ((typeof p1MousseTurnsActive === 'undefined' || p1MousseTurnsActive === 0) && gameDifficultyBeforeMousse !== null) {
-                        setGameDifficulty(gameDifficultyBeforeMousse); console.log("Mousse: Game difficulty reverted to", gameDifficultyBeforeMousse, "Speed:", gameSpeed);
-                        gameDifficultyBeforeMousse = null;
-                    } else { console.log("Mousse: P2 effect ended, but P1 Mousse may still be active. Difficulty not changed by P2.");}
-                }
-            }
-            // Handle P2 Width Increase Effect Countdown
-            if (head2 && !p2AwaitingMessageAck && typeof p2WidthIncreaseTurnsActive !== 'undefined' && p2WidthIncreaseTurnsActive > 0) {
-                p2WidthIncreaseTurnsActive--;
-                console.log(`P2 width effect: ${p2WidthIncreaseTurnsActive} turns remaining.`);
-                if (p2WidthIncreaseTurnsActive === 0) {
-                    console.log(`P2 width effect expired. Reverting to width: ${p2OriginalWidthBeforeIncrease}`);
-                    setSnakeWidthP2(p2OriginalWidthBeforeIncrease);
-                }
-            }
         } // Closes `else` for `if (p2AwaitingMessageAck)`
     } // Closes `if (isPlayer2Active && gameStarted && !isPaused && !p2_gameOver)`
 
@@ -700,6 +732,9 @@ function triggerEndGame(isWin) {
 }
 
 function setGameDifficulty(level) {
+    // TEST LOG: Game difficulty change
+    const oldLevel = currentDifficultyLevel;
+    const oldSpeed = gameSpeed;
     currentDifficultyLevel = level; 
     let newSpeed;
     switch (level) {
@@ -709,6 +744,7 @@ function setGameDifficulty(level) {
         default: newSpeed = gameSpeed; // Keep current if level is unknown
     }
     gameSpeed = newSpeed;
+    console.log(`[TEST_LOG] Difficulty Change: Level from ${oldLevel} to ${currentDifficultyLevel}. Speed from ${oldSpeed} to ${gameSpeed}.`);
     if (gameStarted && !gameOver && !isPaused) {
         clearInterval(gameIntervalId);
         gameIntervalId = setInterval(updateGame, gameSpeed);
