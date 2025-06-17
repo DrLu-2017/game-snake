@@ -24,6 +24,12 @@ let p2LastEatenFoodType = null;
 let p1AwaitingMessageAck = false;
 let p2AwaitingMessageAck = false;
 
+// --- Player Specific Effect Countdowns ---
+let p1MousseFoodCountdown = 0;
+let p1WidthIncreaseFoodCountdown = 0;
+let p2MousseFoodCountdown = 0;
+let p2WidthIncreaseFoodCountdown = 0;
+
 // --- Player 1 Game State ---
 let p1_targetLength = 0;
 let p1_roundsAchieved = 0;
@@ -164,6 +170,12 @@ function initGame() {
     p2SpeedChangeTimeoutId = null;
     gameDifficultyBeforeMousse = null; 
     
+    // Reset food countdown variables
+    p1MousseFoodCountdown = 0;
+    p1WidthIncreaseFoodCountdown = 0;
+    p2MousseFoodCountdown = 0;
+    p2WidthIncreaseFoodCountdown = 0;
+
     setGameDifficulty(currentDifficultyLevel); 
 
     p1LastEatenFoodType = null;
@@ -193,6 +205,9 @@ function startNewRoundForPlayer(playerNum) {
         p1AwaitingMessageAck = false; 
         if (p1SpeedChangeTimeoutId) { clearTimeout(p1SpeedChangeTimeoutId); p1SpeedChangeTimeoutId = null; }
         p1SpeedEffectActive = false;
+        // Reset P1 food countdown variables
+        p1MousseFoodCountdown = 0;
+        p1WidthIncreaseFoodCountdown = 0;
         console.log(`[GAME LOGIC] P1 New Round. Target: ${p1_targetLength}, Current Len: ${currentSnakeLength}`);
     } else if (playerNum === 2) {
         p2_foodEatenThisRound = 0;
@@ -202,6 +217,9 @@ function startNewRoundForPlayer(playerNum) {
         p2AwaitingMessageAck = false; 
         if (p2SpeedChangeTimeoutId) { clearTimeout(p2SpeedChangeTimeoutId); p2SpeedChangeTimeoutId = null; }
         p2SpeedEffectActive = false;
+        // Reset P2 food countdown variables
+        p2MousseFoodCountdown = 0;
+        p2WidthIncreaseFoodCountdown = 0;
         console.log(`[GAME LOGIC] P2 New Round. Target: ${p2_targetLength}, Current Len: ${currentSnakeLength}`);
     }
 
