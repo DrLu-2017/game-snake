@@ -275,6 +275,8 @@ function updateGame() {
     if (isPaused) { drawGame(); return; }
 
     let foodEatenThisTick = false;
+    let p1FoodEatenOnThisTurn = false; // Declared at function scope
+    let p2FoodEatenOnThisTurn = false; // Declared at function scope
     // processP1FoodThisTick and processP2FoodThisTick are replaced by p1FoodEatenOnThisTurn and p2FoodEatenOnThisTurn
     let head1 = null; 
     let head2 = null;
@@ -285,7 +287,7 @@ function updateGame() {
         else {
             head1 = moveSnake1(); 
 
-            let p1FoodEatenOnThisTurn = false;
+            p1FoodEatenOnThisTurn = false; // Reset for P1's turn processing
             const currentP1Width = getSnakeWidthP1();
             const currentDx1 = dx1; // Assuming dx1, dy1 are global for P1 direction
             const currentDy1 = dy1;
@@ -442,7 +444,7 @@ function updateGame() {
         else {
             head2 = moveSnake2();
 
-            let p2FoodEatenOnThisTurn = false;
+            p2FoodEatenOnThisTurn = false; // Reset for P2's turn processing
             const currentP2Width = getSnakeWidthP2();
             const currentDx2 = dx2; // Assuming dx2, dy2 are global for P2 direction
             const currentDy2 = dy2;
