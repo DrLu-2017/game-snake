@@ -19,38 +19,102 @@
     #rulesContainer strong { color: #fff; }
     #rulesContainer p { margin-bottom: 10px; line-height: 1.4;}
 
+    #p1StatusContainer, #p2StatusContainer {
+        width: 100%; /* Occupy full width */
+        display: flex; /* Use flexbox for inline items */
+        justify-content: space-around; /* Distribute items evenly */
+        align-items: center; /* Align items vertically */
+        padding: 5px 0; /* Add some vertical padding */
+        box-sizing: border-box; /* Include padding in width calculation */
+    }
+
+    #p1StatusContainer > div, #p2StatusContainer > div {
+        /* Ensure child divs within status containers don't force line breaks unnecessarily */
+        /* May not be strictly needed if they are simple text nodes or already inline-block */
+        margin: 0 5px; /* Add some spacing between status items */
+    }
+
+    /* It's important to ensure that the h4 inside the status containers doesn't break the flex layout */
+    #p1StatusContainer h4, #p2StatusContainer h4 {
+        margin: 0 10px 0 0; /* Adjust margin for the heading */
+        padding: 0;
+        font-size: 1em; /* Make it relative to parent's 12px */
+    }
+
     /* Styles for Mobile Controls - Added/Modified for size increase */
     #mobileControlsContainer {
-      /* display: none; /* This is set in HTML and by JS, display:grid is set by JS when shown */
-      width: 150px;  /* Adjusted width */
-      height: 150px; /* Adjusted height */
-      display: grid; /* This defines the layout when it becomes visible. Initial hiding is by inline style or JS. */
-      grid-template-columns: 1fr 1fr 1fr;
-      grid-template-rows: 1fr 1fr 1fr;
-      gap: 5px; /* Adjusted gap */
-      margin-top: 15px; /* Adjust margin as needed */
+        display: block; /* Ensure it's a block, but not a grid */
+        position: relative; /* Important if buttons are positioned relative to this */
+        width: auto; /* Or 100% if it should span screen width */
+        height: auto;
+        margin-top: 10px; /* Adjust as needed */
+        /* Ensure it can contain absolutely positioned children if they are relative to it.
+           If buttons are positioned relative to canvas/body, this container might not need much styling.
+           For now, assuming buttons will be positioned relative to this container's containing block (e.g. body or a game wrapper).
+           Let's make it wrap the canvas area conceptually.
+           The actual positioning of buttons will be outside the normal flow.
+        */
     }
-    .mbtn { /* Mobile button styling */
-      padding: 0; /* Remove padding if using fixed width/height for centering text */
-      font-size: 24px; /* Adjusted font size */
-      width: 45px;   /* Adjusted width */
-      height: 45px;  /* Adjusted height */
-      line-height: 45px; /* Vertically center text if padding is 0 (for single line text) */
-      text-align: center; /* Horizontally center text */
+    .mbtn { /* Mobile button styling - size from previous step, ensure position is absolute */
+      font-size: 24px; /* Kept from previous step */
+      width: 45px;   /* Kept from previous step */
+      height: 45px;  /* Kept from previous step */
+      line-height: 45px; /* Kept from previous step */
+      border-radius: 5px; /* Kept from previous step */
       background: #444;
       color: #fff;
       border: 1px solid #555;
-      border-radius: 5px; /* Adjusted border radius */
       cursor: pointer;
-      box-sizing: border-box; /* Good practice */
+      box-sizing: border-box;
+      position: absolute; /* Key change for individual positioning */
+      z-index: 100; /* Ensure they are above other elements like canvas */
     }
     .mbtn:hover {
-      background: #555; /* Basic hover effect */
+      background: #555;
     }
-    #mobileBtnUp { grid-column: 2; grid-row: 1; }
-    #mobileBtnLeft { grid-column: 1; grid-row: 2; }
-    #mobileBtnRight { grid-column: 3; grid-row: 2; }
-    #mobileBtnDown { grid-column: 2; grid-row: 3; }
+
+    /* Specific positions for mobile buttons */
+    /* These values assume the #mobileControlsContainer is around the #game canvas,
+       and the canvas is 400x400. Adjust if canvas size differs.
+       The offsets (-55px) push buttons outside the direct canvas area.
+    */
+    #mobileBtnUp {
+        top: -55px; /* Above #mobileControlsContainer or its offset parent */
+        left: 50%;
+        transform: translateX(-50%);
+        grid-column: auto; /* Reset grid positioning */
+        grid-row: auto;    /* Reset grid positioning */
+    }
+
+    #mobileBtnDown {
+        bottom: -55px; /* Below #mobileControlsContainer or its offset parent */
+                       /* This might need to be a 'top' value if parent has no defined height,
+                          e.g., top: calc(100% + 10px); relative to canvas.
+                          For simplicity with current #mobileControlsContainer, using bottom.
+                          If #mobileControlsContainer is placed directly after canvas,
+                          this will be 55px below the bottom of #mobileControlsContainer.
+                       */
+        left: 50%;
+        transform: translateX(-50%);
+        grid-column: auto;
+        grid-row: auto;
+    }
+
+    #mobileBtnLeft {
+        top: 50%;
+        left: -55px; /* To the left of #mobileControlsContainer or its offset parent */
+        transform: translateY(-50%);
+        grid-column: auto;
+        grid-row: auto;
+    }
+
+    #mobileBtnRight {
+        top: 50%;
+        right: -55px; /* To the right of #mobileControlsContainer or its offset parent */
+        transform: translateY(-50%);
+        grid-column: auto;
+        grid-row: auto;
+    }
   </style>
 </head>
 <body>
@@ -64,8 +128,8 @@
 
   <div id="currentTimeDisplay"></div>
 
-  <!-- Player 1 Status -->
-  <div id="p1StatusContainer" style="margin-top: 10px; padding: 5px; border: 1px solid #444; color: #ccc; font-size: 12px; width: 200px; text-align: center; margin-right: 5px; display:none;">
+  <!-- Player 1 Status (Moved before canvas) -->
+  <div id="p1StatusContainer" style="margin-top: 10px; padding: 5px; border: 1px solid #444; color: #ccc; font-size: 12px; margin-right: 5px; display:none;">
       <h4>Player 1 (Green)</h4>
       <div id="p1CurrentLengthDisplay">Current Length: 0</div>
       <div id="p1TargetLengthDisplay" style="margin-bottom: 3px;">Target Length: 0</div>
@@ -74,8 +138,10 @@
       <div id="p1GameOverDisplay" style="color: red; display: none; font-weight: bold;">GAME OVER</div>
   </div>
 
-  <!-- Player 2 Status -->
-  <div id="p2StatusContainer" style="margin-top: 10px; padding: 5px; border: 1px solid #444; color: #ccc; font-size: 12px; width: 200px; text-align: center; margin-left: 5px; display:none;">
+  <canvas id="game" width="400" height="400" style="display:none;"></canvas>
+
+  <!-- Player 2 Status (Ensured after canvas) -->
+  <div id="p2StatusContainer" style="margin-top: 10px; padding: 5px; border: 1px solid #444; color: #ccc; font-size: 12px; margin-left: 5px; display:none;">
       <h4>Player 2 (Blue)</h4>
       <div id="p2CurrentLengthDisplay">Current Length: 0</div>
       <div id="p2TargetLengthDisplay" style="margin-bottom: 3px;">Target Length: 0</div>
@@ -92,7 +158,6 @@
       <div id="foodThisRoundDisplay">Food This Round: 0 / 10</div>
   </div> -->
 
-  <canvas id="game" width="400" height="400" style="display:none;"></canvas>
   <div class="buttons game-buttons" style="display:flex;"> <!-- Added game-buttons class -->
     <button id="toggleRulesBtn" class="btn" style="display:none;">Show Rules</button> <!-- Added Rules Button, hidden -->
     <button class="btn" onclick="setDirection('up')" style="display:none;">↑</button> <!-- Hidden -->
@@ -100,7 +165,6 @@
     <button class="btn" onclick="setDirection('down')" style="display:none;">↓</button> <!-- Hidden -->
     <button class="btn" onclick="setDirection('right')" style="display:none;">→</button> <!-- Hidden -->
     <button id="controlBtn" class="btn">Start Game</button> <!-- ID changed, text updated by JS - REMAINS VISIBLE -->
-    <button id="playPauseBtn" class="btn" style="display:none;">Play/Pause Music</button><span style="font-size: 12px; color: #aaa; margin-left: 5px; display:none;">(Music: 'background_music.mp3' needed)</span> <!-- Button and span hidden -->
     <button class="btn difficulty-btn" data-level="easy" style="display: none;">Easy</button> <!-- Already hidden, remains hidden -->
     <button class="btn difficulty-btn" data-level="medium" style="display: none;">Medium</button> <!-- Already hidden, remains hidden -->
     <button class="btn difficulty-btn" data-level="hard" style="display: none;">Hard</button> <!-- Already hidden, remains hidden -->
@@ -191,7 +255,6 @@
     }
 
     const bgMusic = document.getElementById("bgMusic");
-    const playPauseBtn = document.getElementById("playPauseBtn");
     const difficultyButtons = document.querySelectorAll(".difficulty-btn");
     const controlBtn = document.getElementById("controlBtn"); // Updated ID
     // const scoreDisplay = document.getElementById("scoreDisplay"); // Replaced by p1CurrentLengthDisplay etc.
@@ -494,15 +557,6 @@
                             const toggleRulesBtnElem = document.getElementById('toggleRulesBtn');
                             if (toggleRulesBtnElem) toggleRulesBtnElem.style.display = 'inline-block';
 
-                            const playPauseBtnElem = document.getElementById('playPauseBtn');
-                            if (playPauseBtnElem) {
-                                playPauseBtnElem.style.display = 'inline-block';
-                                const musicNoteSpan = playPauseBtnElem.nextElementSibling;
-                                if (musicNoteSpan && musicNoteSpan.tagName === 'SPAN') {
-                                    musicNoteSpan.style.display = 'inline';
-                                }
-                            }
-
                             // Show direction buttons (select by onclick attribute content - fragile but necessary without better selectors)
                             const allButtonsInContainer = buttonsDiv.querySelectorAll('button.btn');
                             allButtonsInContainer.forEach(btn => {
@@ -516,7 +570,7 @@
                             // Show mobile controls ONLY on mobile devices
                             if (isMobileDevice()) {
                                 const mobileControls = document.getElementById('mobileControlsContainer');
-                                if (mobileControls) mobileControls.style.display = 'grid';
+                                if (mobileControls) mobileControls.style.display = 'block'; // Changed from 'grid' to 'block'
                             }
                             // No need for an else here to hide mobileControls,
                             // as DOMContentLoaded already hides it for non-mobile,
@@ -662,28 +716,7 @@
         console.error("Error attaching event listeners for difficultyButtons:", e);
     }
 
-    // Music Play/Pause Button
-    try {
-        if (playPauseBtn && bgMusic) {
-            playPauseBtn.addEventListener("click", () => {
-                try { // Inner try-catch for the callback logic
-                    if (bgMusic.paused) {
-                        bgMusic.play();
-                        playPauseBtn.textContent = "Pause Music";
-                    } else {
-                        bgMusic.pause();
-                        playPauseBtn.textContent = "Play Music";
-                    }
-                } catch (e) {
-                    console.error("Error in playPauseBtn click callback:", e);
-                }
-            });
-        } else {
-            console.error("playPauseBtn or bgMusic not found for event listener attachment.");
-        }
-    } catch (e) {
-        console.error("Error attaching event listener for playPauseBtn:", e);
-    }
+    // Music Play/Pause Button (Removed)
 
     // Current Time Display
     function updateTime() {
