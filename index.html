@@ -28,16 +28,17 @@
         overflow: hidden; /* Prevent content from breaking out if too long */
         white-space: nowrap; /* Prevent text itself from wrapping within child elements */
         flex-wrap: nowrap; /* Prevent flex items from wrapping */
-        justify-content: center; /* Center the group of items */
+        justify-content: flex-start; /* Align items to the start */
     }
 
     #p1StatusContainer > h4, #p2StatusContainer > h4,
     #p1StatusContainer > div, #p2StatusContainer > div {
-        display: inline; /* Or rely on flex item behavior. display: inline might not be needed if parent is flex. */
+        /* display: inline; removed as flex items behave like blocks in flow */
         margin-right: 10px; /* Space between items */
         padding: 0; /* Reset padding */
         white-space: nowrap; /* Ensure text within each item doesn't wrap */
         flex-shrink: 0; /* Prevent items from shrinking if space is tight */
+        flex-grow: 0; /* Prevent items from growing */
     }
 
     /* Remove margin from the last item in the container */
@@ -93,7 +94,7 @@
     #mobileBtnUp {
         top: 0;
         left: 50%;
-        transform: translate(-50%, -120%); /* Move up by its height + 20% margin */
+        transform: translate(-50%, -100%); /* Places bottom edge of button at top edge of wrapper */
         grid-column: auto;
         grid-row: auto;
     }
@@ -101,7 +102,7 @@
     #mobileBtnDown {
         bottom: 0;
         left: 50%;
-        transform: translate(-50%, 120%); /* Move down by its height + 20% margin */
+        transform: translate(-50%, 100%); /* Places top edge of button at bottom edge of wrapper */
         grid-column: auto;
         grid-row: auto;
     }
@@ -109,7 +110,7 @@
     #mobileBtnLeft {
         left: 0;
         top: 50%;
-        transform: translate(-120%, -50%); /* Move left by its width + 20% margin */
+        transform: translate(-100%, -50%); /* Places right edge of button at left edge of wrapper */
         grid-column: auto;
         grid-row: auto;
     }
@@ -118,7 +119,7 @@
         right: 0; /* Anchor to the right edge */
         left: auto; /* Important: override any previous 'left' if #mobileBtnLeft was copied */
         top: 50%;
-        transform: translate(120%, -50%); /* Move right by its width + 20% margin */
+        transform: translate(100%, -50%); /* Places left edge of button at right edge of wrapper */
         grid-column: auto;
         grid-row: auto;
     }
