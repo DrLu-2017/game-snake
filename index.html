@@ -5,7 +5,7 @@
   <title>Snake Battle</title>
   <style>
     body { margin: 0; display: flex; flex-direction: column; align-items: center; background: #111; color: #fff; font-family: sans-serif; }
-    canvas { background: #333; margin-top: 20px; }
+    canvas { background: #333; /* margin-top: 20px; */ display: block; /* Ensure canvas is block for wrapper centering */ }
     .buttons { margin-top: 10px; display: flex; flex-wrap: wrap; justify-content: center; }
     .btn { padding: 10px 20px; margin: 5px; background: #333; color: #fff; border: none; font-size: 18px; border-radius: 8px; }
     .game-buttons .btn { padding: 5px 10px; font-size: 14px; } /* New rule for smaller game control buttons */
@@ -20,40 +20,56 @@
     #rulesContainer p { margin-bottom: 10px; line-height: 1.4;}
 
     #p1StatusContainer, #p2StatusContainer {
-        width: 100%; /* Occupy full width */
-        display: flex; /* Use flexbox for inline items */
-        justify-content: space-around; /* Distribute items evenly */
-        align-items: center; /* Align items vertically */
-        padding: 5px 0; /* Add some vertical padding */
-        box-sizing: border-box; /* Include padding in width calculation */
+        width: 100%;
+        display: flex;
+        align-items: center; /* Vertical alignment */
+        padding: 5px 0;
+        box-sizing: border-box;
+        overflow: hidden; /* Prevent content from breaking out if too long */
+        white-space: nowrap; /* Prevent text itself from wrapping within child elements */
+        flex-wrap: nowrap; /* Prevent flex items from wrapping */
+        justify-content: center; /* Center the group of items */
     }
 
+    #p1StatusContainer > h4, #p2StatusContainer > h4,
     #p1StatusContainer > div, #p2StatusContainer > div {
-        /* Ensure child divs within status containers don't force line breaks unnecessarily */
-        /* May not be strictly needed if they are simple text nodes or already inline-block */
-        margin: 0 5px; /* Add some spacing between status items */
+        display: inline; /* Or rely on flex item behavior. display: inline might not be needed if parent is flex. */
+        margin-right: 10px; /* Space between items */
+        padding: 0; /* Reset padding */
+        white-space: nowrap; /* Ensure text within each item doesn't wrap */
+        flex-shrink: 0; /* Prevent items from shrinking if space is tight */
     }
 
-    /* It's important to ensure that the h4 inside the status containers doesn't break the flex layout */
+    /* Remove margin from the last item in the container */
+    #p1StatusContainer > *:last-child,
+    #p2StatusContainer > *:last-child {
+        margin-right: 0;
+    }
+
+    /* Specific style for h4 if it needs to be distinct */
     #p1StatusContainer h4, #p2StatusContainer h4 {
-        margin: 0 10px 0 0; /* Adjust margin for the heading */
-        padding: 0;
-        font-size: 1em; /* Make it relative to parent's 12px */
+        font-weight: bold; /* Keep it bold */
+        font-size: 1em; /* Relative to parent's 12px */
+        /* margin-right is already set above, ensure no conflict or double margin if h4 is also a direct child */
     }
 
     /* Styles for Mobile Controls - Added/Modified for size increase */
+    #gameAreaWrapper {
+        position: relative; /* Crucial for absolute positioning of children */
+        width: 400px; /* Match canvas width */
+        height: 400px; /* Match canvas height */
+        margin: 10px auto; /* Center the wrapper and provide some margin */
+        /* background-color: #555; */ /* Optional: for visualizing the wrapper boundaries during testing */
+    }
     #mobileControlsContainer {
-        display: block; /* Ensure it's a block, but not a grid */
-        position: relative; /* Important if buttons are positioned relative to this */
-        width: auto; /* Or 100% if it should span screen width */
-        height: auto;
-        margin-top: 10px; /* Adjust as needed */
-        /* Ensure it can contain absolutely positioned children if they are relative to it.
-           If buttons are positioned relative to canvas/body, this container might not need much styling.
-           For now, assuming buttons will be positioned relative to this container's containing block (e.g. body or a game wrapper).
-           Let's make it wrap the canvas area conceptually.
-           The actual positioning of buttons will be outside the normal flow.
-        */
+        display: block; /* Or 'none' initially, JS handles visibility */
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%; /* Takes full width of gameAreaWrapper */
+        height: 100%; /* Takes full height of gameAreaWrapper */
+        /* background-color: rgba(255,0,0,0.1); */ /* Optional: for visualizing during testing */
+        pointer-events: none; /* Allows clicks to pass through to the canvas if needed, buttons will override */
     }
     .mbtn { /* Mobile button styling - size from previous step, ensure position is absolute */
       font-size: 24px; /* Kept from previous step */
@@ -68,50 +84,41 @@
       box-sizing: border-box;
       position: absolute; /* Key change for individual positioning */
       z-index: 100; /* Ensure they are above other elements like canvas */
+      pointer-events: auto; /* Make buttons clickable */
     }
     .mbtn:hover {
       background: #555;
     }
 
-    /* Specific positions for mobile buttons */
-    /* These values assume the #mobileControlsContainer is around the #game canvas,
-       and the canvas is 400x400. Adjust if canvas size differs.
-       The offsets (-55px) push buttons outside the direct canvas area.
-    */
     #mobileBtnUp {
-        top: -55px; /* Above #mobileControlsContainer or its offset parent */
+        top: 0;
         left: 50%;
-        transform: translateX(-50%);
-        grid-column: auto; /* Reset grid positioning */
-        grid-row: auto;    /* Reset grid positioning */
+        transform: translate(-50%, -120%); /* Move up by its height + 20% margin */
+        grid-column: auto;
+        grid-row: auto;
     }
 
     #mobileBtnDown {
-        bottom: -55px; /* Below #mobileControlsContainer or its offset parent */
-                       /* This might need to be a 'top' value if parent has no defined height,
-                          e.g., top: calc(100% + 10px); relative to canvas.
-                          For simplicity with current #mobileControlsContainer, using bottom.
-                          If #mobileControlsContainer is placed directly after canvas,
-                          this will be 55px below the bottom of #mobileControlsContainer.
-                       */
+        bottom: 0;
         left: 50%;
-        transform: translateX(-50%);
+        transform: translate(-50%, 120%); /* Move down by its height + 20% margin */
         grid-column: auto;
         grid-row: auto;
     }
 
     #mobileBtnLeft {
+        left: 0;
         top: 50%;
-        left: -55px; /* To the left of #mobileControlsContainer or its offset parent */
-        transform: translateY(-50%);
+        transform: translate(-120%, -50%); /* Move left by its width + 20% margin */
         grid-column: auto;
         grid-row: auto;
     }
 
     #mobileBtnRight {
+        right: 0; /* Anchor to the right edge */
+        left: auto; /* Important: override any previous 'left' if #mobileBtnLeft was copied */
         top: 50%;
-        right: -55px; /* To the right of #mobileControlsContainer or its offset parent */
-        transform: translateY(-50%);
+        transform: translate(120%, -50%); /* Move right by its width + 20% margin */
         grid-column: auto;
         grid-row: auto;
     }
@@ -132,20 +139,28 @@
   <div id="p1StatusContainer" style="margin-top: 10px; padding: 5px; border: 1px solid #444; color: #ccc; font-size: 12px; margin-right: 5px; display:none;">
       <h4>Player 1 (Green)</h4>
       <div id="p1CurrentLengthDisplay">Current Length: 0</div>
-      <div id="p1TargetLengthDisplay" style="margin-bottom: 3px;">Target Length: 0</div>
-      <div id="p1RoundsDisplay" style="margin-bottom: 3px;">Rounds Cleared: 0 / 5</div>
+      <div id="p1TargetLengthDisplay" style="">Target Length: 0</div>
+      <div id="p1RoundsDisplay" style="">Rounds Cleared: 0 / 5</div>
       <div id="p1FoodThisRoundDisplay">Food This Round: 0 / 10</div>
       <div id="p1GameOverDisplay" style="color: red; display: none; font-weight: bold;">GAME OVER</div>
   </div>
 
-  <canvas id="game" width="400" height="400" style="display:none;"></canvas>
+  <div id="gameAreaWrapper">
+      <canvas id="game" width="400" height="400" style="display:none;"></canvas>
+      <div id="mobileControlsContainer" style="display: none;"> <!-- style from previous steps -->
+          <button id="mobileBtnUp" class="mbtn">↑</button>
+          <button id="mobileBtnLeft" class="mbtn">←</button>
+          <button id="mobileBtnRight" class="mbtn">→</button>
+          <button id="mobileBtnDown" class="mbtn">↓</button>
+      </div>
+  </div>
 
   <!-- Player 2 Status (Ensured after canvas) -->
   <div id="p2StatusContainer" style="margin-top: 10px; padding: 5px; border: 1px solid #444; color: #ccc; font-size: 12px; margin-left: 5px; display:none;">
       <h4>Player 2 (Blue)</h4>
       <div id="p2CurrentLengthDisplay">Current Length: 0</div>
-      <div id="p2TargetLengthDisplay" style="margin-bottom: 3px;">Target Length: 0</div>
-      <div id="p2RoundsDisplay" style="margin-bottom: 3px;">Rounds Cleared: 0 / 5</div>
+      <div id="p2TargetLengthDisplay" style="">Target Length: 0</div>
+      <div id="p2RoundsDisplay" style="">Rounds Cleared: 0 / 5</div>
       <div id="p2FoodThisRoundDisplay">Food This Round: 0 / 10</div>
       <div id="p2GameOverDisplay" style="color: red; display: none; font-weight: bold;">GAME OVER</div>
   </div>
