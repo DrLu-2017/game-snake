@@ -26,9 +26,21 @@
         padding: 5px 0;
         box-sizing: border-box;
         overflow: hidden; /* Prevent content from breaking out if too long */
-        white-space: nowrap; /* Prevent text itself from wrapping within child elements */
-        flex-wrap: nowrap; /* Prevent flex items from wrapping */
+        /* white-space: nowrap; Removed, apply to child if needed */
+        /* flex-wrap: nowrap; Removed, single child doesn't wrap */
         justify-content: flex-start; /* Align items to the start */
+    }
+
+    #p1InfoDisplay, #p2InfoDisplay {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 12px; /* Consistent font size for the info line */
+    }
+
+    .game-over-text {
+        color: red;
+        font-weight: bold;
     }
 
     #p1StatusContainer > h4, #p2StatusContainer > h4,
@@ -138,12 +150,7 @@
 
   <!-- Player 1 Status (Moved before canvas) -->
   <div id="p1StatusContainer" style="margin-top: 10px; padding: 5px; border: 1px solid #444; color: #ccc; font-size: 12px; margin-right: 5px; display:none;">
-      <h4>Player 1 (Green)</h4>
-      <div id="p1CurrentLengthDisplay">Current Length: 0</div>
-      <div id="p1TargetLengthDisplay" style="">Target Length: 0</div>
-      <div id="p1RoundsDisplay" style="">Rounds Cleared: 0 / 5</div>
-      <div id="p1FoodThisRoundDisplay">Food This Round: 0 / 10</div>
-      <div id="p1GameOverDisplay" style="color: red; display: none; font-weight: bold;">GAME OVER</div>
+      <div id="p1InfoDisplay"></div>
   </div>
 
   <div id="gameAreaWrapper">
@@ -158,12 +165,7 @@
 
   <!-- Player 2 Status (Ensured after canvas) -->
   <div id="p2StatusContainer" style="margin-top: 10px; padding: 5px; border: 1px solid #444; color: #ccc; font-size: 12px; margin-left: 5px; display:none;">
-      <h4>Player 2 (Blue)</h4>
-      <div id="p2CurrentLengthDisplay">Current Length: 0</div>
-      <div id="p2TargetLengthDisplay" style="">Target Length: 0</div>
-      <div id="p2RoundsDisplay" style="">Rounds Cleared: 0 / 5</div>
-      <div id="p2FoodThisRoundDisplay">Food This Round: 0 / 10</div>
-      <div id="p2GameOverDisplay" style="color: red; display: none; font-weight: bold;">GAME OVER</div>
+      <div id="p2InfoDisplay"></div>
   </div>
 
   <!-- ScoreDisplay is removed as it's incorporated into P1 status. gameStatusContainer is replaced by P1 & P2 containers. -->

@@ -94,53 +94,56 @@ function acknowledgeFoodWarning() {
  */
 function updateGameStatusDisplay() {
     console.log("[DEBUG_STARTUP] updateGameStatusDisplay: Start");
-    const p1TargetLengthEl = document.getElementById('p1TargetLengthDisplay');
-    if (p1TargetLengthEl) p1TargetLengthEl.textContent = 'Target Length: ' + p1_targetLength;
-    else console.error("[DEBUG_STARTUP] updateGameStatusDisplay: Element 'p1TargetLengthDisplay' NOT FOUND!");
-    const p1RoundsEl = document.getElementById('p1RoundsDisplay');
-    if (p1RoundsEl) p1RoundsEl.textContent = 'Rounds Cleared: ' + p1_roundsAchieved + ' / ' + maxRoundsPerGame;
-    else console.error("[DEBUG_STARTUP] updateGameStatusDisplay: Element 'p1RoundsDisplay' NOT FOUND!");
-    const p1FoodThisRoundEl = document.getElementById('p1FoodThisRoundDisplay');
-    if (p1FoodThisRoundEl) p1FoodThisRoundEl.textContent = 'Food This Round: ' + p1_foodEatenThisRound + ' / ' + maxFoodPerRound;
-    else console.error("[DEBUG_STARTUP] updateGameStatusDisplay: Element 'p1FoodThisRoundDisplay' NOT FOUND!");
-    const p1CurrentLengthEl = document.getElementById('p1CurrentLengthDisplay');
-    if (p1CurrentLengthEl) p1CurrentLengthEl.textContent = 'Current Length: ' + (typeof snake1Body !== 'undefined' && snake1Body ? snake1Body.length : 0);
-    else console.error("[DEBUG_STARTUP] updateGameStatusDisplay: Element 'p1CurrentLengthDisplay' NOT FOUND!");
-    const p1GameOverEl = document.getElementById('p1GameOverDisplay');
-    if (p1GameOverEl) p1GameOverEl.style.display = p1_gameOver ? 'block' : 'none';
-    else console.error("[DEBUG_STARTUP] updateGameStatusDisplay: Element 'p1GameOverDisplay' NOT FOUND!");
 
+    // Player 1
+    const p1InfoDisplay = document.getElementById('p1InfoDisplay');
     const p1StatusContainer = document.getElementById('p1StatusContainer');
+
     if (p1StatusContainer) {
-        p1StatusContainer.style.fontSize = '12px'; // Ensure font size
+        // Visibility of P1 container is generally handled by index.html logic on game start/end
+        // but ensure font size here.
+        p1StatusContainer.style.fontSize = '12px';
+    } else {
+        console.error("[DEBUG_STARTUP] updateGameStatusDisplay: Element 'p1StatusContainer' NOT FOUND!");
     }
 
+    if (p1InfoDisplay) {
+        let p1StatusString = `Player 1 (Green) - Len: ${(typeof snake1Body !== 'undefined' && snake1Body ? snake1Body.length : 0)} Target: ${p1_targetLength} Rounds: ${p1_roundsAchieved}/${maxRoundsPerGame} Food: ${p1_foodEatenThisRound}/${maxFoodPerRound}`;
+        if (p1_gameOver) {
+            p1StatusString += " <span class='game-over-text'>GAME OVER</span>";
+        }
+        p1InfoDisplay.innerHTML = p1StatusString;
+    } else {
+        console.error("[DEBUG_STARTUP] updateGameStatusDisplay: Element 'p1InfoDisplay' NOT FOUND!");
+    }
+
+    // Player 2
+    const p2InfoDisplay = document.getElementById('p2InfoDisplay');
     const p2StatusContainer = document.getElementById('p2StatusContainer');
+
     if (p2StatusContainer) {
         p2StatusContainer.style.fontSize = '12px'; // Ensure font size
-        if (typeof isPlayer2Active !== 'undefined' && !isPlayer2Active) {
-            p2StatusContainer.style.display = 'none';
+        if (typeof isPlayer2Active !== 'undefined' && isPlayer2Active) {
+            p2StatusContainer.style.display = 'block'; // Or 'flex' if that's the style used
+            if (p2InfoDisplay) {
+                let p2StatusString = `Player 2 (Blue) - Len: ${(typeof snake2Body !== 'undefined' && snake2Body ? snake2Body.length : 0)} Target: ${p2_targetLength} Rounds: ${p2_roundsAchieved}/${maxRoundsPerGame} Food: ${p2_foodEatenThisRound}/${maxFoodPerRound}`;
+                if (p2_gameOver) {
+                    p2StatusString += " <span class='game-over-text'>GAME OVER</span>";
+                }
+                p2InfoDisplay.innerHTML = p2StatusString;
+            } else {
+                console.error("[DEBUG_STARTUP] updateGameStatusDisplay: Element 'p2InfoDisplay' NOT FOUND for active P2!");
+            }
         } else {
-            p2StatusContainer.style.display = 'block';
-            const p2TargetLengthEl = document.getElementById('p2TargetLengthDisplay');
-            if (p2TargetLengthEl) p2TargetLengthEl.textContent = 'Target Length: ' + p2_targetLength;
-            else console.error("[DEBUG_STARTUP] updateGameStatusDisplay: Element 'p2TargetLengthDisplay' NOT FOUND!");
-            const p2RoundsEl = document.getElementById('p2RoundsDisplay');
-            if (p2RoundsEl) p2RoundsEl.textContent = 'Rounds Cleared: ' + p2_roundsAchieved + ' / ' + maxRoundsPerGame;
-            else console.error("[DEBUG_STARTUP] updateGameStatusDisplay: Element 'p2RoundsDisplay' NOT FOUND!");
-            const p2FoodThisRoundEl = document.getElementById('p2FoodThisRoundDisplay');
-            if (p2FoodThisRoundEl) p2FoodThisRoundEl.textContent = 'Food This Round: ' + p2_foodEatenThisRound + ' / ' + maxFoodPerRound;
-            else console.error("[DEBUG_STARTUP] updateGameStatusDisplay: Element 'p2FoodThisRoundDisplay' NOT FOUND!");
-            const p2CurrentLengthEl = document.getElementById('p2CurrentLengthDisplay');
-            if (p2CurrentLengthEl) p2CurrentLengthEl.textContent = 'Current Length: ' + (typeof snake2Body !== 'undefined' && snake2Body ? snake2Body.length : 0);
-            else console.error("[DEBUG_STARTUP] updateGameStatusDisplay: Element 'p2CurrentLengthDisplay' NOT FOUND!");
-            const p2GameOverEl = document.getElementById('p2GameOverDisplay');
-            if (p2GameOverEl) p2GameOverEl.style.display = p2_gameOver ? 'block' : 'none';
-            else console.error("[DEBUG_STARTUP] updateGameStatusDisplay: Element 'p2GameOverDisplay' NOT FOUND!");
+            p2StatusContainer.style.display = 'none';
+            if (p2InfoDisplay) { // Clear content if P2 is not active
+                p2InfoDisplay.innerHTML = "";
+            }
         }
     } else {
         console.error("[DEBUG_STARTUP] updateGameStatusDisplay: Element 'p2StatusContainer' NOT FOUND!");
     }
+
     console.log("[DEBUG_STARTUP] updateGameStatusDisplay: End");
 }
 
