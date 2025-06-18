@@ -110,8 +110,14 @@ function updateGameStatusDisplay() {
     if (p1GameOverEl) p1GameOverEl.style.display = p1_gameOver ? 'block' : 'none';
     else console.error("[DEBUG_STARTUP] updateGameStatusDisplay: Element 'p1GameOverDisplay' NOT FOUND!");
 
+    const p1StatusContainer = document.getElementById('p1StatusContainer');
+    if (p1StatusContainer) {
+        p1StatusContainer.style.fontSize = '12px'; // Ensure font size
+    }
+
     const p2StatusContainer = document.getElementById('p2StatusContainer');
     if (p2StatusContainer) {
+        p2StatusContainer.style.fontSize = '12px'; // Ensure font size
         if (typeof isPlayer2Active !== 'undefined' && !isPlayer2Active) {
             p2StatusContainer.style.display = 'none';
         } else {
