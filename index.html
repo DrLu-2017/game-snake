@@ -2,12 +2,13 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>贪吃蛇游戏</title>
+  <title>Snake Battle</title>
   <style>
     body { margin: 0; display: flex; flex-direction: column; align-items: center; background: #111; color: #fff; font-family: sans-serif; }
     canvas { background: #333; margin-top: 20px; }
     .buttons { margin-top: 10px; display: flex; flex-wrap: wrap; justify-content: center; }
     .btn { padding: 10px 20px; margin: 5px; background: #333; color: #fff; border: none; font-size: 18px; border-radius: 8px; }
+    .game-buttons .btn { padding: 5px 10px; font-size: 14px; } /* New rule for smaller game control buttons */
     #currentTimeDisplay { margin-top: 10px; font-size: 16px; }
     #scoreDisplay { margin-top: 5px; font-size: 20px; color: #fff; } /* This ID might be unused, but keeping original styles */
     #rulesContainer { margin-top: 15px; padding: 10px; border: 1px solid #555; border-radius: 5px; max-width: 500px; text-align: left; background-color: #222; }
@@ -21,25 +22,25 @@
     /* Styles for Mobile Controls - Added/Modified for size increase */
     #mobileControlsContainer {
       /* display: none; /* This is set in HTML and by JS, display:grid is set by JS when shown */
-      width: 215px;  /* Adjusted: 65px * 3 buttons + 10px * 2 gaps */
-      height: 215px; /* Adjusted: 65px * 3 buttons + 10px * 2 gaps */
+      width: 150px;  /* Adjusted width */
+      height: 150px; /* Adjusted height */
       display: grid; /* This defines the layout when it becomes visible. Initial hiding is by inline style or JS. */
       grid-template-columns: 1fr 1fr 1fr;
       grid-template-rows: 1fr 1fr 1fr;
-      gap: 10px; /* Increased gap for larger buttons */
+      gap: 5px; /* Adjusted gap */
       margin-top: 15px; /* Adjust margin as needed */
     }
     .mbtn { /* Mobile button styling */
       padding: 0; /* Remove padding if using fixed width/height for centering text */
-      font-size: 32px; /* Larger arrow text */
-      width: 65px;   /* Significantly larger width */
-      height: 65px;  /* Significantly larger height */
-      line-height: 65px; /* Vertically center text if padding is 0 (for single line text) */
+      font-size: 24px; /* Adjusted font size */
+      width: 45px;   /* Adjusted width */
+      height: 45px;  /* Adjusted height */
+      line-height: 45px; /* Vertically center text if padding is 0 (for single line text) */
       text-align: center; /* Horizontally center text */
       background: #444;
       color: #fff;
       border: 1px solid #555;
-      border-radius: 10px; /* Slightly larger radius */
+      border-radius: 5px; /* Adjusted border radius */
       cursor: pointer;
       box-sizing: border-box; /* Good practice */
     }
@@ -53,7 +54,7 @@
   </style>
 </head>
 <body>
-  <h1>贪吃蛇游戏</h1>
+  <h1 style="display:none;">Snake Battle</h1>
 
   <div id="playerModeSelection" style="margin-bottom: 20px; text-align: center;">
       <h2>Select Game Mode:</h2>
@@ -64,7 +65,7 @@
   <div id="currentTimeDisplay"></div>
 
   <!-- Player 1 Status -->
-  <div id="p1StatusContainer" style="margin-top: 10px; padding: 5px; border: 1px solid #444; color: #ccc; font-size: 14px; width: 200px; text-align: center; margin-right: 5px; display:none;">
+  <div id="p1StatusContainer" style="margin-top: 10px; padding: 5px; border: 1px solid #444; color: #ccc; font-size: 28px; width: 200px; text-align: center; margin-right: 5px; display:none;">
       <h4>Player 1 (Green)</h4>
       <div id="p1CurrentLengthDisplay">Current Length: 0</div>
       <div id="p1TargetLengthDisplay" style="margin-bottom: 3px;">Target Length: 0</div>
@@ -74,7 +75,7 @@
   </div>
 
   <!-- Player 2 Status -->
-  <div id="p2StatusContainer" style="margin-top: 10px; padding: 5px; border: 1px solid #444; color: #ccc; font-size: 14px; width: 200px; text-align: center; margin-left: 5px; display:none;">
+  <div id="p2StatusContainer" style="margin-top: 10px; padding: 5px; border: 1px solid #444; color: #ccc; font-size: 28px; width: 200px; text-align: center; margin-left: 5px; display:none;">
       <h4>Player 2 (Blue)</h4>
       <div id="p2CurrentLengthDisplay">Current Length: 0</div>
       <div id="p2TargetLengthDisplay" style="margin-bottom: 3px;">Target Length: 0</div>
@@ -92,7 +93,7 @@
   </div> -->
 
   <canvas id="game" width="400" height="400" style="display:none;"></canvas>
-  <div class="buttons" style="display:flex;"> <!-- Changed to display:flex -->
+  <div class="buttons game-buttons" style="display:flex;"> <!-- Added game-buttons class -->
     <button id="toggleRulesBtn" class="btn" style="display:none;">Show Rules</button> <!-- Added Rules Button, hidden -->
     <button class="btn" onclick="setDirection('up')" style="display:none;">↑</button> <!-- Hidden -->
     <button class="btn" onclick="setDirection('left')" style="display:none;">←</button> <!-- Hidden -->
@@ -216,6 +217,18 @@
     // Initialize food and draw initial game screen (start message)
     // food.js and game.js functions are now globally available.
     document.addEventListener('DOMContentLoaded', () => {
+      if (isMobileDevice()) {
+        const twoPlayerRadio = document.querySelector('input[name="playerMode"][value="2P"]');
+        if (twoPlayerRadio && twoPlayerRadio.parentElement) {
+          twoPlayerRadio.parentElement.style.display = 'none'; // Hide the label containing the radio
+        }
+        const onePlayerRadio = document.querySelector('input[name="playerMode"][value="1P"]');
+        if (onePlayerRadio) {
+          onePlayerRadio.checked = true;
+        }
+        selectedGameMode = '1P'; // Ensure selectedGameMode is also updated
+      }
+
       const warningContainer = document.getElementById('consecutiveFoodWarning');
       const warningAckBtn = document.getElementById('warningAckBtn');
       // const warningTextMessage = document.getElementById('warningTextMessage'); // Not strictly needed here if game.js handles text

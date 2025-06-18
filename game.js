@@ -1,5 +1,10 @@
 // game.js
 
+// Add this function at the beginning of game.js if not already there
+function isMobileDevice() {
+  return navigator.maxTouchPoints > 0;
+}
+
 // Assumes food.js and snake.js are loaded first.
 // Assumes canvas, ctx, box, rows, cols are global, defined in index.html.
 // Assumes P1 snake variables (snake1Body, dx1, dy1 etc.) and P2 snake variables are global from snake.js
@@ -135,6 +140,17 @@ function updateGameStatusDisplay() {
 
 function initGame() {
     console.log("[DEBUG_STARTUP] initGame: Start");
+
+    // Hide h1 title and playerModeSelection div
+    const mainTitle = document.querySelector('h1');
+    if (mainTitle) {
+        mainTitle.style.display = 'none';
+    }
+    const playerModeSelectionDiv = document.getElementById('playerModeSelection');
+    if (playerModeSelectionDiv) {
+        playerModeSelectionDiv.style.display = 'none';
+    }
+
     gameStarted = true;
     isPaused = false;
     gameOver = false; 
@@ -143,6 +159,12 @@ function initGame() {
     p1_roundsAchieved = 0;
     resetSnake1(); // From snake.js
     startNewRoundForPlayer(1);
+
+    // Force 1P mode on mobile devices
+    if (isMobileDevice()) {
+        selectedGameMode = '1P';
+        console.log("[GAME SETUP] Mobile device detected. Forcing 1-Player mode.");
+    }
 
     if (typeof selectedGameMode !== 'undefined' && selectedGameMode === '2P') {
         isPlayer2Active = true;
